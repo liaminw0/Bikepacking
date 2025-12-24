@@ -1,5 +1,76 @@
-{{ partial "header.html" . }}
-
+{{ define "main" }}
 {{ .Content }}
 
-{{ partial "footer.html" . }}
+<section class="about-section">
+  {{ $about := or .Site.Params.about "Add your homepage blurb via [params].about in hugo.toml." }}
+  <div class="about-blurb">
+    <div class="about-avatar">
+      <img src="{{ or .Site.Params.avatar "https://placehold.co/200x200?text=Profile" }}" alt="{{ .Site.Title }} avatar">
+    </div>
+    <p>{{ $about }}</p>
+  </div>
+  {{ $rss := "" }}
+  {{ with .OutputFormats.Get "rss" }}{{ $rss = .RelPermalink }}{{ end }}
+  {{ with .Site.Params.social }}
+  <ul class="about-links">
+    {{ range . }}
+      {{ $link := .url }}
+      {{ if and (eq (lower .name) "rss") $rss }}{{ $link = $rss }}{{ end }}
+      {{ if $link }}<li><a href="{{ $link }}">{{ .name }}</a></li>{{ end }}
+    {{ end }}
+  </ul>
+  {{ end }}
+</section>
+
+<div class="home-split">
+  <section class="posts-list">
+    <h2>Recent Entries</h2>
+    {{ range first 3 (where .Site.RegularPages "Section" "journal") }}
+    <article class="post-snippet">
+      <h3>
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      </h3>
+      <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+        {{ .Date.Format "January 2, 2006" }}
+      </time>
+    </article>
+    {{ end }}
+  </section>
+
+  <section class="latest-photo">
+    <h2>Latest Photo</h2>
+    {{ $placeholder := "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='%23f2f2f2'%3E%3Crect width='600' height='600'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='32' font-family='Arial,sans-serif'%3EPhoto%3C/text%3E%3C/svg%3E" }}
+    {{ with first 1 (where .Site.RegularPages.ByDate.Reverse "Section" "photos") }}
+      {{ range . }}
+        {{ $img := .Resources.GetMatch "*.{jpg,jpeg,png,webp,gif}" }}
+        {{ $src := $placeholder }}
+        {{ if $img }}
+          {{ $src = $img.RelPermalink }}
+        {{ else if .Params.image }}
+          {{ $src = .Params.image }}
+        {{ end }}
+        <a class="latest-photo__thumb" href="{{ .RelPermalink }}">
+          <img src="{{ $src }}" alt="{{ .Title }}">
+        </a>
+        <p class="latest-photo__caption">{{ .Title }}</p>
+      {{ end }}
+    {{ else }}
+      <p>No photos yet.</p>
+    {{ end }}
+  </section>
+</div>
+
+<div class="home-actions">
+  <div class="home-action home-action--entries">
+    <a href="{{ "/journal/" | relURL }}">View all entries</a>
+  </div>
+  <div class="home-action home-action--photos">
+    <a href="{{ "/photos/" | relURL }}">View all photos</a>
+  </div>
+</div>
+
+<section class="route-map">
+  <h2>Route</h2>
+<iframe style="width: 100%; height: 300px; border: 0;" allowfullscreen allow="geolocation" src="//umap.openstreetmap.fr/en/map/untitled-map_1336406?scaleControl=true&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=false&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=null&onLoadPanel=none&captionBar=false&captionMenus=false&homeControl=false&printControl=null&measureControl=null&captionControl=null&fullscreenControl=true"></iframe>
+</section>
+{{ end }}

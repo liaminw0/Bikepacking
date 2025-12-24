@@ -1,7 +1,38 @@
-{{ partial "header.html" . }}
-
+{{ define "main" }}
 <h1>{{ .Title }}</h1>
+
+{{ if or (eq .Section "journal") (eq .Section "photos") }}
+  <p class="post-meta">
+    <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+      {{ .PublishDate.Format "January 2, 2006" }}
+    </time>
+  </p>
+{{ end }}
 
 {{ .Content }}
 
-{{ partial "footer.html" . }}
+{{ if and .Params.lat .Params.lon }}
+<section class="post-location">
+  <h2>Location</h2>
+  {{ partial "openstreetmap.html" (dict
+    "lat" .Params.lat
+    "lon" .Params.lon
+    "zoom" (or .Params.map_zoom .Params.zoom)
+    "delta" (or .Params.map_delta .Params.delta)
+  ) }}
+</section>
+{{ end }}
+
+<nav class="post-nav">
+  <div class="post-nav__prev">
+    {{ with .PrevInSection }}
+      <a href="{{ .RelPermalink }}">&larr; {{ .Title }}</a>
+    {{ end }}
+  </div>
+  <div class="post-nav__next">
+    {{ with .NextInSection }}
+      <a href="{{ .RelPermalink }}">{{ .Title }} &rarr;</a>
+    {{ end }}
+  </div>
+</nav>
+{{ end }}

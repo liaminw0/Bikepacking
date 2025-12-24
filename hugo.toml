@@ -1,4 +1,38 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'Bikepacking to Istanbul'
 theme = 'base'
+
+[params]
+  about = "Replace this with your own intro text from hugo.toml."
+  avatar = "https://placehold.co/200x200?text=Profile"
+  [[params.social]]
+    name = "GitHub"
+    url = "https://github.com/liaminw0"
+  [[params.social]]
+    name = "Instagram"
+    url = "https://www.instagram.com/liam_inw"
+  [[params.social]]
+    name = "Email"
+    url = "mailto:you@example.com"
+  [[params.social]]
+    name = "RSS"
+
+
+[markup]
+  [markup.goldmark.renderer]
+    unsafe = true
+
+[menu]
+  [[menu.main]]
+    name = "About"
+    url = "/about/"
+    weight = 1
+  [[menu.main]]
+    name = "Journal"
+    url = "/journal/"
+    weight = 2
+  [[menu.main]]
+    name = "Photos"
+    url = "/photos/"
+    weight = 3

@@ -1,0 +1,24 @@
+{{ define "main" }}
+<h1>{{ .Title }}</h1>
+
+{{ with .Content }}{{ . }}{{ end }}
+
+<div class="photo-grid">
+  {{ range .Pages }}
+    {{ $placeholder := "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='%23f2f2f2'%3E%3Crect width='600' height='600'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='32' font-family='Arial,sans-serif'%3EPhoto%3C/text%3E%3C/svg%3E" }}
+    {{ $src := $placeholder }}
+    {{ $img := .Resources.GetMatch "*.{jpg,jpeg,png,webp,gif}" }}
+    {{ if $img }}
+      {{ $src = $img.RelPermalink }}
+    {{ else if .Params.image }}
+      {{ $src = .Params.image }}
+    {{ end }}
+    <a class="photo-grid__item{{ if eq $src $placeholder }} photo-grid__item--placeholder{{ end }}" href="{{ .RelPermalink }}">
+      <div class="photo-grid__thumb">
+        <img src="{{ $src }}" alt="{{ .Title }}">
+      </div>
+      <span class="photo-grid__title">{{ .Title }}</span>
+    </a>
+  {{ end }}
+</div>
+{{ end }}

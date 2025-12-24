@@ -1,0 +1,29 @@
+{{ $latParam := .Get "lat" }}
+{{ $lonParam := .Get "lon" }}
+{{ $zoom := default "16" (.Get "zoom") }}
+{{ $delta := 0.01 }}
+{{ with .Get "delta" }}{{ $delta = float . }}{{ end }}
+{{ if and $latParam $lonParam }}
+  {{ $lat := float $latParam }}
+  {{ $lon := float $lonParam }}
+  {{ $latMin := sub $lat $delta }}
+  {{ $latMax := add $lat $delta }}
+  {{ $lonMin := sub $lon $delta }}
+  {{ $lonMax := add $lon $delta }}
+  {{ $bbox := printf "%.6f,%.6f,%.6f,%.6f" $lonMin $latMin $lonMax $latMax }}
+  {{ $marker := printf "%.6f,%.6f" $lat $lon }}
+<div class="osm-embed" style="position:relative;padding-bottom:56%;height:0;overflow:hidden;border:1px solid #ddd;">
+  <iframe
+    src="https://www.openstreetmap.org/export/embed.html?bbox={{ $bbox }}&layer=mapnik&marker={{ $marker }}"
+    style="border:0;position:absolute;top:0;left:0;width:100%;height:100%;"
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="margin-top:0.5rem;">
+  <a href="https://www.openstreetmap.org/?mlat={{ $lat }}&mlon={{ $lon }}#map={{ $zoom }}/{{ $lat }}/{{ $lon }}">View on OpenStreetMap</a>
+</p>
+{{ else }}
+<p><em>OpenStreetMap shortcode requires <code>lat</code> and <code>lon</code> parameters.</em></p>
+{{ end }}

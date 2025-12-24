@@ -1,6 +1,5 @@
-{{ partial "header.html" . }}
-
-<h1>{{ .Title }}</h1>
+{{ define "main" }}
+<h1>{{ if eq .Section "journal" }}Journal{{ else }}{{ .Title }}{{ end }}</h1>
 
 {{ .Content }}
 
@@ -14,5 +13,4 @@
 	</time>
 </article>
 {{ end }}
-
-{{ partial "footer.html" . }}
+{{ end }}
