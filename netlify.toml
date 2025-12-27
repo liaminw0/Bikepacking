@@ -28,3 +28,4 @@ command = """\
   for = "/.netlify/functions/*"
   [headers.values]
     Access-Control-Allow-Credentials = "true"
+NODE_VERSION = "22.12.0"
