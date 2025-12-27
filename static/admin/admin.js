@@ -19,6 +19,7 @@ const tagsInput = document.getElementById("tagsInput");
 const slugInput = document.getElementById("slugInput");
 const sectionInput = document.getElementById("sectionInput");
 const sectionFilter = document.getElementById("sectionFilter");
+const customFields = document.getElementById("customFields");
 const shortcodeBtn = document.getElementById("shortcodeBtn");
 const shortcodeModal = document.getElementById("shortcodeModal");
 const closeShortcodeBtn = document.getElementById("closeShortcodeBtn");
@@ -31,6 +32,8 @@ let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
 let selectedSection = CONTENT_DIRS[0];
+let templates = [];
+let editorInstanceHeight = 560;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -133,6 +136,13 @@ function buildFrontMatter(data) {
     `tags: [${tags}]`,
   ];
   if (data.slug) lines.push(`slug: ${data.slug}`);
+  if (data.extras) {
+    Object.entries(data.extras).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") return;
+      const safeVal = String(value).replace(/"/g, '\\"');
+      lines.push(`${key}: "${safeVal}"`);
+    });
+  }
   lines.push("---", "");
   return lines.join("\n");
 }
@@ -190,7 +200,12 @@ async function openPost(path) {
     tagsInput.value = Array.isArray(fm.tags) ? fm.tags.join(", ") : "";
     slugInput.value = fm.slug || "";
     const section = (data.path || "").split("/").slice(0, -1).join("/");
-    if (sectionInput && section) sectionInput.value = section;
+    if (section) {
+      selectedSection = section;
+      if (sectionInput) sectionInput.value = section;
+      if (sectionFilter) sectionFilter.value = section;
+    }
+    renderCustomFields(fm);
     editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
@@ -214,6 +229,7 @@ function newPost() {
   if (sectionInput && selectedSection) {
     sectionInput.value = selectedSection;
   }
+  renderCustomFields();
   deletePostBtn.classList.add("hidden");
   showEditor();
 }
@@ -234,6 +250,7 @@ async function savePost() {
     draft: draftInput.checked,
     tags,
     slug,
+    extras: gatherCustomFields(),
   });
   const content = `${fm}${body}`;
   const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
@@ -355,6 +372,7 @@ function setSections(sections) {
   if (!selectedSection && opts.length) selectedSection = opts[0].value;
   if (sectionInput && selectedSection) sectionInput.value = selectedSection;
   if (sectionFilter && selectedSection) sectionFilter.value = selectedSection;
+  renderCustomFields();
 }
 
 function applyTemplate(template, values) {
@@ -390,6 +408,63 @@ async function loadShortcodes() {
   }
 }
 
+async function loadTemplates() {
+  try {
+    const res = await fetch("templates.json", { cache: "no-cache" });
+    templates = await res.json();
+  } catch {
+    templates = [];
+  }
+}
+
+function currentTemplate(section) {
+  return templates.find((t) => t.section === section) || null;
+}
+
+function renderCustomFields(prefill = {}) {
+  if (!customFields) return;
+  const template = currentTemplate(selectedSection);
+  customFields.innerHTML = "";
+  if (!template || !template.fields) return;
+  template.fields.forEach((field) => {
+    const wrap = document.createElement("label");
+    wrap.textContent = field.label;
+    wrap.style.display = "grid";
+    wrap.style.gap = "0.35rem";
+    let input;
+    if (field.type === "textarea") {
+      input = document.createElement("textarea");
+      input.rows = 3;
+    } else if (field.type === "select") {
+      input = document.createElement("select");
+      (field.options || []).forEach((opt) => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        input.appendChild(o);
+      });
+    } else {
+      input = document.createElement("input");
+      input.type = "text";
+    }
+    input.dataset.key = field.key;
+    if (field.placeholder) input.placeholder = field.placeholder;
+    if (prefill[field.key] !== undefined) input.value = prefill[field.key];
+    wrap.appendChild(input);
+    customFields.appendChild(wrap);
+  });
+}
+
+function gatherCustomFields() {
+  if (!customFields) return {};
+  const extras = {};
+  customFields.querySelectorAll("[data-key]").forEach((el) => {
+    const key = el.dataset.key;
+    extras[key] = el.value;
+  });
+  return extras;
+}
+
 async function ensureToastUI() {
   // Prefer local bundled assets to avoid CDN/MIME/blocked issues.
   loadCss("toastui-editor.min.css");
@@ -414,6 +489,10 @@ async function ensureToastUI() {
 
 async function init() {
   await ensureToastUI();
+  const setEditorHeight = () => {
+    editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
+    if (editor) editor.height(editorInstanceHeight + "px");
+  };
   editor = new toastui.Editor({
     el: editorEl,
     height: "560px",
@@ -445,8 +524,11 @@ async function init() {
     if (e.target === shortcodeModal) toggleShortcodeModal(false);
   });
 
+  await loadTemplates().catch(() => {});
   loadShortcodes();
   setSections(CONTENT_DIRS);
+  setEditorHeight();
+  window.addEventListener("resize", setEditorHeight);
 
   loadPosts().then(showList).catch((err) => {
     if (err.message === "unauthorized") showLogin();
