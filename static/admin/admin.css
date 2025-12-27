@@ -38,6 +38,10 @@ body {
 
 .brand { font-weight: 700; }
 
+#logoutBtn.hidden {
+  display: none !important;
+}
+
 .page {
   display: grid;
   gap: 1rem;
