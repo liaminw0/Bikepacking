@@ -27,6 +27,8 @@ export function getEnv() {
     GITHUB_OWNER,
     GITHUB_REPO,
     GITHUB_BRANCH,
+    CONTENT_DIR,
+    CONTENT_DIRS,
   } = process.env;
   if (!ADMIN_PASSWORD || !JWT_SECRET) {
     throw new Error("Missing ADMIN_PASSWORD or JWT_SECRET");
@@ -43,6 +45,11 @@ export function getEnv() {
       repo: GITHUB_REPO,
       branch: GITHUB_BRANCH || "main",
     },
+    contentDirs: (CONTENT_DIRS || CONTENT_DIR || "content/posts")
+      .split(",")
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .map((d) => d.replace(/^\//, "").replace(/\/+$/, "")),
   };
 }
 
@@ -83,11 +90,14 @@ export function clearCookie() {
   return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0;${secure}`;
 }
 
-export function enforceContentPath(path) {
+export function enforceContentPath(path, env) {
   if (!path) throw new Error("Path required");
   if (path.includes("..")) throw new Error("Invalid path");
-  if (!path.startsWith("content/posts/")) return `content/posts/${path}`;
-  return path;
+  const bases = env?.contentDirs?.length ? env.contentDirs : ["content/posts"];
+  const match = bases.find((b) => path.startsWith(`${b}/`));
+  if (match) return path;
+  // If not matched, prefix with the first allowed base.
+  return `${bases[0]}/${path.replace(/^\/+/, "")}`;
 }
 
 export async function githubRequest(env, resourcePath, init = {}) {

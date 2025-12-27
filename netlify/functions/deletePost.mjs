@@ -12,8 +12,8 @@ export const handler = async (event) => {
   }
   const { path: rawPath, sha, message } = body;
   if (!rawPath || !sha) return jsonResponse(400, { error: "Path and sha required" });
-  const path = enforceContentPath(rawPath);
   const env = getEnv();
+  const path = enforceContentPath(rawPath, env);
   try {
     const res = await githubRequest(env, `/contents/${path}`, {
       method: "DELETE",

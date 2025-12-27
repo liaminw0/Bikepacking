@@ -1,3 +1,4 @@
+const CONTENT_DIRS = window.CONTENT_DIRS || [window.CONTENT_DIR || "content/posts"];
 const editorEl = document.getElementById("editor");
 const loginView = document.getElementById("loginView");
 const listView = document.getElementById("listView");
@@ -16,6 +17,7 @@ const dateInput = document.getElementById("dateInput");
 const draftInput = document.getElementById("draftInput");
 const tagsInput = document.getElementById("tagsInput");
 const slugInput = document.getElementById("slugInput");
+const sectionInput = document.getElementById("sectionInput");
 const shortcodeBtn = document.getElementById("shortcodeBtn");
 const shortcodeModal = document.getElementById("shortcodeModal");
 const closeShortcodeBtn = document.getElementById("closeShortcodeBtn");
@@ -149,6 +151,9 @@ async function api(path, options = {}) {
 
 async function loadPosts() {
   const data = await api("listPosts");
+  if (Array.isArray(data.contentDirs) && data.contentDirs.length) {
+    setSections(data.contentDirs);
+  }
   postsContainer.innerHTML = "";
   if (!data.items || !data.items.length) {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
@@ -158,7 +163,8 @@ async function loadPosts() {
     const row = document.createElement("button");
     row.className = "post-row";
     row.type = "button";
-    row.innerHTML = `<div><strong>${item.name}</strong><br><span>${item.path}</span></div><span>${item.size}b</span>`;
+    const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
+    row.innerHTML = `<div><strong>${item.name}</strong><br><span>${section}</span></div><span>${item.size}b</span>`;
     row.addEventListener("click", () => openPost(item.path));
     postsContainer.appendChild(row);
   });
@@ -174,6 +180,8 @@ async function openPost(path) {
     draftInput.checked = !!fm.draft;
     tagsInput.value = Array.isArray(fm.tags) ? fm.tags.join(", ") : "";
     slugInput.value = fm.slug || "";
+    const section = (data.path || "").split("/").slice(0, -1).join("/");
+    if (section) sectionInput.value = section;
     editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
@@ -194,6 +202,9 @@ function newPost() {
   tagsInput.value = "";
   slugInput.value = "";
   editor.setMarkdown("");
+  if (sectionInput.options.length) {
+    sectionInput.value = sectionInput.options[0].value;
+  }
   deletePostBtn.classList.add("hidden");
   showEditor();
 }
@@ -217,7 +228,8 @@ async function savePost() {
   });
   const content = `${fm}${body}`;
   const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
-  const path = currentPost?.path || `content/posts/${filename}`;
+  const chosenDir = sectionInput.value || CONTENT_DIRS[0];
+  const path = currentPost?.path || `${chosenDir}/${filename}`;
   const payload = {
     path,
     content,
@@ -308,6 +320,16 @@ function renderShortcodeFields(sc) {
   });
 }
 
+function setSections(sections) {
+  sectionInput.innerHTML = "";
+  (sections || []).forEach((section) => {
+    const opt = document.createElement("option");
+    opt.value = section;
+    opt.textContent = section.replace(/^content\//, "");
+    sectionInput.appendChild(opt);
+  });
+}
+
 function applyTemplate(template, values) {
   return template.replace(/\$\{(.*?)\}/g, (_, key) => values[key] ?? "");
 }
@@ -365,6 +387,7 @@ async function ensureToastUI() {
 
 async function init() {
   await ensureToastUI();
+  setSections(CONTENT_DIRS);
 
   editor = new toastui.Editor({
     el: editorEl,

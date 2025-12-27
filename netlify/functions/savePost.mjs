@@ -12,8 +12,8 @@ export const handler = async (event) => {
   }
   const { path: rawPath, content, message, sha } = body;
   if (!rawPath || !content) return jsonResponse(400, { error: "Path and content required" });
-  const path = enforceContentPath(rawPath);
   const env = getEnv();
+  const path = enforceContentPath(rawPath, env);
   const payload = {
     message: message || `Update ${path}`,
     content: Buffer.from(content).toString("base64"),

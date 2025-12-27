@@ -5,8 +5,8 @@ export const handler = async (event) => {
   if (!auth.ok) return auth.response;
   const pathParam = event.queryStringParameters?.path;
   if (!pathParam) return jsonResponse(400, { error: "Path required" });
-  const path = enforceContentPath(decodeURIComponent(pathParam));
   const env = getEnv();
+  const path = enforceContentPath(decodeURIComponent(pathParam), env);
   try {
     const res = await githubRequest(env, `/contents/${path}?ref=${env.github.branch}`);
     const data = await res.json();

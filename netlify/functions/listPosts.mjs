@@ -5,19 +5,28 @@ export const handler = async (event) => {
   if (!auth.ok) return auth.response;
   const env = getEnv();
   try {
-    const res = await githubRequest(env, `/contents/content/posts?ref=${env.github.branch}`);
-    if (res.status === 404) return jsonResponse(200, { items: [] });
-    const data = await res.json();
-    if (!res.ok) {
-      return jsonResponse(res.status, { error: data?.message || "GitHub error" });
+    const dirs = env.contentDirs?.length ? env.contentDirs : ["content/posts"];
+    const items = [];
+    for (const dir of dirs) {
+      const res = await githubRequest(env, `/contents/${dir}?ref=${env.github.branch}`);
+      if (res.status === 404) continue;
+      const data = await res.json();
+      if (!res.ok) {
+        return jsonResponse(res.status, { error: data?.message || "GitHub error" });
+      }
+      (Array.isArray(data) ? data : [])
+        .filter((f) => f.type === "file")
+        .forEach((f) =>
+          items.push({
+            name: f.name,
+            path: enforceContentPath(f.path, env),
+            sha: f.sha,
+            size: f.size,
+            section: dir,
+          }),
+        );
     }
-    const items = (Array.isArray(data) ? data : []).filter((f) => f.type === "file").map((f) => ({
-      name: f.name,
-      path: enforceContentPath(f.path),
-      sha: f.sha,
-      size: f.size,
-    }));
-    return jsonResponse(200, { items });
+    return jsonResponse(200, { items, contentDirs: dirs });
   } catch (err) {
     console.error(err);
     return jsonResponse(500, { error: "Failed to list posts" });
