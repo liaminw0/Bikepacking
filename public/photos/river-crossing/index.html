@@ -1,9 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      const setTheme = (mode) => {
+        root.setAttribute('data-theme', mode);
+        if (meta) meta.setAttribute('content', mode === 'dark' ? 'dark light' : 'light dark');
+      };
+      try {
+        const saved = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(saved || (prefersDark ? 'dark' : 'light'));
+      } catch (e) {
+        setTheme('light');
+      }
+    })();
+  </script>
 
 	<title>River Crossing | Bikepacking to Istanbul</title>
 
@@ -15,24 +33,25 @@
 
 <header class="site-header">
   <nav class="site-nav">
-    <a class="logo" href="https://example.org/">
+    <a class="logo" href="http://localhost:1313/">
       Bikepacking to Istanbul
     </a>
     <ul class="main-menu">
       
-        <li>
-          <a href="/about/">About</a>
-        </li>
+      <li>
+        <a href="/about/">About</a>
+      </li>
       
-        <li>
-          <a href="/journal/">Journal</a>
-        </li>
+      <li>
+        <a href="/journal/">Journal</a>
+      </li>
       
-        <li>
-          <a href="/photos/">Photos</a>
-        </li>
+      <li>
+        <a href="/photos/">Photos</a>
+      </li>
       
     </ul>
+    <button class="theme-toggle" type="button" aria-pressed="false">Toggle theme</button>
   </nav>
 </header>
 
@@ -88,6 +107,38 @@
 <footer>
 	<p>&copy;2025 Bikepacking to Istanbul</p>
 </footer>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const toggle = document.querySelector('.theme-toggle');
+  const meta = document.querySelector('meta[name="color-scheme"]');
+
+  const apply = (mode) => {
+    root.setAttribute('data-theme', mode);
+    if (toggle) toggle.setAttribute('aria-pressed', mode === 'dark');
+    if (meta) meta.setAttribute('content', mode === 'dark' ? 'dark light' : 'light dark');
+  };
+
+  try {
+    const saved = localStorage.getItem('theme');
+    const preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    apply(saved || preferred || root.dataset.theme || 'light');
+  } catch (e) {
+    apply(root.dataset.theme || 'light');
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try {
+        localStorage.setItem('theme', next);
+      } catch (e) {}
+    });
+  }
+})();
+</script>
 
 </body>
 </html>

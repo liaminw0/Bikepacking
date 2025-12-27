@@ -4,5 +4,37 @@
 	<p>&copy;{{ dateFormat "2006" now }} {{ .Site.Title }}</p>
 </footer>
 
+<script>
+(() => {
+  const root = document.documentElement;
+  const toggle = document.querySelector('.theme-toggle');
+  const meta = document.querySelector('meta[name="color-scheme"]');
+
+  const apply = (mode) => {
+    root.setAttribute('data-theme', mode);
+    if (toggle) toggle.setAttribute('aria-pressed', mode === 'dark');
+    if (meta) meta.setAttribute('content', mode === 'dark' ? 'dark light' : 'light dark');
+  };
+
+  try {
+    const saved = localStorage.getItem('theme');
+    const preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    apply(saved || preferred || root.dataset.theme || 'light');
+  } catch (e) {
+    apply(root.dataset.theme || 'light');
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try {
+        localStorage.setItem('theme', next);
+      } catch (e) {}
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

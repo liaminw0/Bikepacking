@@ -2,49 +2,49 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://example.org/</loc>
+    <loc>http://localhost:1313/</loc>
     <lastmod>2025-12-24T12:07:28+01:00</lastmod>
   </url><url>
-    <loc>https://example.org/journal/</loc>
+    <loc>http://localhost:1313/journal/</loc>
     <lastmod>2025-12-24T12:07:28+01:00</lastmod>
   </url><url>
-    <loc>https://example.org/journal/trail-notes/</loc>
+    <loc>http://localhost:1313/journal/trail-notes/</loc>
     <lastmod>2025-12-24T12:07:28+01:00</lastmod>
   </url><url>
-    <loc>https://example.org/journal/markdown-showcase/</loc>
+    <loc>http://localhost:1313/journal/markdown-showcase/</loc>
     <lastmod>2025-12-24T12:02:43+01:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/coffee-stop/</loc>
+    <loc>http://localhost:1313/photos/coffee-stop/</loc>
     <lastmod>2024-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/gravel-road/</loc>
+    <loc>http://localhost:1313/photos/gravel-road/</loc>
     <lastmod>2024-01-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/sunset-ridge/</loc>
+    <loc>http://localhost:1313/photos/sunset-ridge/</loc>
     <lastmod>2024-01-05T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/forest-trail/</loc>
+    <loc>http://localhost:1313/photos/forest-trail/</loc>
     <lastmod>2024-01-04T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/campfire/</loc>
+    <loc>http://localhost:1313/photos/campfire/</loc>
     <lastmod>2024-01-03T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/river-crossing/</loc>
+    <loc>http://localhost:1313/photos/river-crossing/</loc>
     <lastmod>2024-01-02T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/mountain-pass/</loc>
+    <loc>http://localhost:1313/photos/mountain-pass/</loc>
     <lastmod>2024-01-01T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/photos/</loc>
+    <loc>http://localhost:1313/photos/</loc>
     <lastmod>2024-01-01T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://example.org/journal/my-first-post/</loc>
+    <loc>http://localhost:1313/journal/my-first-post/</loc>
     <lastmod>2020-09-03T17:27:59+07:00</lastmod>
   </url><url>
-    <loc>https://example.org/about/</loc>
+    <loc>http://localhost:1313/about/</loc>
   </url><url>
-    <loc>https://example.org/categories/</loc>
+    <loc>http://localhost:1313/categories/</loc>
   </url><url>
-    <loc>https://example.org/tags/</loc>
+    <loc>http://localhost:1313/tags/</loc>
   </url>
 </urlset>
