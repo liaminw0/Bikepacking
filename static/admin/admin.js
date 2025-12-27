@@ -31,7 +31,6 @@ let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
 let selectedSection = CONTENT_DIRS[0];
-let editorInstanceHeight = 560;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -415,10 +414,6 @@ async function ensureToastUI() {
 
 async function init() {
   await ensureToastUI();
-  const setEditorHeight = () => {
-    editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
-    if (editor) editor.height(editorInstanceHeight + "px");
-  };
   editor = new toastui.Editor({
     el: editorEl,
     height: "560px",
@@ -452,8 +447,6 @@ async function init() {
 
   loadShortcodes();
   setSections(CONTENT_DIRS);
-  setEditorHeight();
-  window.addEventListener("resize", setEditorHeight);
 
   loadPosts().then(showList).catch((err) => {
     if (err.message === "unauthorized") showLogin();

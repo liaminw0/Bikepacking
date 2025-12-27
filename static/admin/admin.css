@@ -156,48 +156,6 @@ button.block { width: 100%; }
   overflow: hidden;
 }
 
-@media (max-width: 600px) {
-  body {
-    max-width: 100%;
-    padding: 0 0.75rem 1.25rem;
-  }
-  .topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .page {
-    gap: 0.75rem;
-  }
-  .card {
-    padding: 0.85rem;
-  }
-  .list-header,
-  .editor-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .list-title,
-  .actions {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .actions button {
-    flex: 1 1 auto;
-  }
-  button,
-  input,
-  select,
-  textarea {
-    font-size: 1rem;
-  }
-  .toastui-editor-defaultUI {
-    max-width: 100%;
-  }
-}
-
 .modal {
   position: fixed;
   inset: 0;
