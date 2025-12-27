@@ -174,8 +174,16 @@ async function loadPosts() {
     const row = document.createElement("button");
     row.className = "post-row";
     row.type = "button";
-    row.innerHTML = `<div><strong>${item.name}</strong><br><span>${section}</span></div><span>${item.size}b</span>`;
+    row.innerHTML = `<div><strong>${item.name}</strong></div><span>${item.size}b</span>`;
     row.addEventListener("click", () => openPost(item.path));
+    // Replace filename with title once fetched.
+    api(`getPost?path=${encodeURIComponent(item.path)}`)
+      .then((post) => {
+        const { fm } = parseFrontMatter(post.content);
+        const title = fm.title || item.name;
+        row.innerHTML = `<div><strong>${title}</strong></div><span>${item.size}b</span>`;
+      })
+      .catch(() => {});
     postsContainer.appendChild(row);
   });
 }
