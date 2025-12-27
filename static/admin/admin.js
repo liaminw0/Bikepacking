@@ -28,6 +28,27 @@ let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
 
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[data-src="${src}"]`)) return resolve();
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = true;
+    script.dataset.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function loadCss(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+
 function showToast(message, isError = false) {
   toastEl.textContent = message;
   toastEl.style.borderColor = isError ? "var(--danger)" : "var(--border)";
@@ -320,7 +341,25 @@ async function loadShortcodes() {
   }
 }
 
-function init() {
+async function ensureToastUI() {
+  loadCss("https://uicdn.toast.com/editor/latest/toastui-editor.min.css");
+  if (!window.toastui?.Editor) {
+    try {
+      await loadScript("https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js");
+    } catch (e) {
+      console.warn("Primary Toast UI CDN failed", e);
+    }
+  }
+  if (!window.toastui?.Editor) {
+    loadCss("https://cdn.jsdelivr.net/npm/@toast-ui/editor@3.2.3/dist/toastui-editor.min.css");
+    await loadScript("https://cdn.jsdelivr.net/npm/@toast-ui/editor@3.2.3/dist/toastui-editor-all.min.js");
+  }
+  if (!window.toastui?.Editor) throw new Error("Toast UI editor failed to load");
+}
+
+async function init() {
+  await ensureToastUI();
+
   editor = new toastui.Editor({
     el: editorEl,
     height: "560px",
@@ -354,12 +393,15 @@ function init() {
   });
 
   loadShortcodes();
-  loadPosts()
-    .then(() => showList())
-    .catch((err) => {
-      if (err.message === "unauthorized") showLogin();
-      else showToast(err.message, true);
-    });
+  loadPosts().then(showList).catch((err) => {
+    if (err.message === "unauthorized") showLogin();
+    else showToast(err.message, true);
+  });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  init().catch((err) => {
+    console.error(err);
+    showToast(err.message || "Failed to load editor", true);
+  });
+});
