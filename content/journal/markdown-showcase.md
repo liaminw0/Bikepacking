@@ -1,6 +1,9 @@
 ---
-title: "Markdown Showcase"
-date: 2025-12-24T12:02:43+0100
+title: "Markdown Showcases"
+date: 2025-12-24T11:02:00.000Z
+draft: false
+tags: []
+slug: markdown-showcases
 ---
 
 # Heading 1
