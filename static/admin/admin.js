@@ -159,11 +159,13 @@ async function loadPosts() {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
     return;
   }
+  const selected = sectionInput?.value || CONTENT_DIRS[0];
   data.items.forEach((item) => {
+    const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
+    if (section && section !== selected) return;
     const row = document.createElement("button");
     row.className = "post-row";
     row.type = "button";
-    const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
     row.innerHTML = `<div><strong>${item.name}</strong><br><span>${section}</span></div><span>${item.size}b</span>`;
     row.addEventListener("click", () => openPost(item.path));
     postsContainer.appendChild(row);
@@ -202,7 +204,7 @@ function newPost() {
   tagsInput.value = "";
   slugInput.value = "";
   editor.setMarkdown("");
-  if (sectionInput && sectionInput.options.length) {
+  if (sectionInput && sectionInput.options.length && !sectionInput.value) {
     sectionInput.value = sectionInput.options[0].value;
   }
   deletePostBtn.classList.add("hidden");
@@ -329,6 +331,9 @@ function setSections(sections) {
     opt.textContent = section.replace(/^content\//, "");
     sectionInput.appendChild(opt);
   });
+  if (!sectionInput.value && sectionInput.options.length) {
+    sectionInput.value = sectionInput.options[0].value;
+  }
 }
 
 function applyTemplate(template, values) {
@@ -426,6 +431,12 @@ async function init() {
     if (err.message === "unauthorized") showLogin();
     else showToast(err.message, true);
   });
+
+  if (sectionInput) {
+    sectionInput.addEventListener("change", () => {
+      loadPosts().catch(() => {});
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
