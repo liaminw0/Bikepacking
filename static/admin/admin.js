@@ -181,7 +181,7 @@ async function openPost(path) {
     tagsInput.value = Array.isArray(fm.tags) ? fm.tags.join(", ") : "";
     slugInput.value = fm.slug || "";
     const section = (data.path || "").split("/").slice(0, -1).join("/");
-    if (section) sectionInput.value = section;
+    if (sectionInput && section) sectionInput.value = section;
     editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
@@ -202,7 +202,7 @@ function newPost() {
   tagsInput.value = "";
   slugInput.value = "";
   editor.setMarkdown("");
-  if (sectionInput.options.length) {
+  if (sectionInput && sectionInput.options.length) {
     sectionInput.value = sectionInput.options[0].value;
   }
   deletePostBtn.classList.add("hidden");
@@ -228,7 +228,7 @@ async function savePost() {
   });
   const content = `${fm}${body}`;
   const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
-  const chosenDir = sectionInput.value || CONTENT_DIRS[0];
+  const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : CONTENT_DIRS[0];
   const path = currentPost?.path || `${chosenDir}/${filename}`;
   const payload = {
     path,
@@ -321,6 +321,7 @@ function renderShortcodeFields(sc) {
 }
 
 function setSections(sections) {
+  if (!sectionInput) return;
   sectionInput.innerHTML = "";
   (sections || []).forEach((section) => {
     const opt = document.createElement("option");
