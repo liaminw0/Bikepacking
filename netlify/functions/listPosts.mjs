@@ -7,6 +7,39 @@ export const handler = async (event) => {
   try {
     const dirs = env.contentDirs?.length ? env.contentDirs : ["content/posts"];
     const items = [];
+    // Helper to parse title from a GitHub file object.
+    const parseTitle = (file) => {
+      try {
+        const content = Buffer.from(file.content || "", file.encoding || "base64").toString("utf8");
+        const match = /^---\n([\s\S]*?)\n---/m.exec(content);
+        if (!match) return null;
+        const lines = match[1].split("\n");
+        for (const line of lines) {
+          const [key, ...rest] = line.split(":");
+          if (key && key.trim() === "title") return rest.join(":").trim().replace(/^"|"$/g, "");
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    };
+
+    // Limit concurrency when fetching file content for titles.
+    const fetchWithLimit = async (tasks, limit = 5) => {
+      const results = [];
+      let idx = 0;
+      const workers = Array(Math.min(limit, tasks.length))
+        .fill(null)
+        .map(async () => {
+          while (idx < tasks.length) {
+            const current = idx++;
+            results[current] = await tasks[current]();
+          }
+        });
+      await Promise.all(workers);
+      return results;
+    };
+
     for (const dir of dirs) {
       const res = await githubRequest(env, `/contents/${dir}?ref=${env.github.branch}`);
       if (res.status === 404) continue;
@@ -14,17 +47,33 @@ export const handler = async (event) => {
       if (!res.ok) {
         return jsonResponse(res.status, { error: data?.message || "GitHub error" });
       }
-      (Array.isArray(data) ? data : [])
-        .filter((f) => f.type === "file")
-        .forEach((f) =>
-          items.push({
+      const files = (Array.isArray(data) ? data : []).filter((f) => f.type === "file");
+      const tasks = files.map((f) => async () => {
+        try {
+          const fres = await githubRequest(env, `/contents/${f.path}?ref=${env.github.branch}`);
+          const fdata = await fres.json();
+          const title = fres.ok ? parseTitle(fdata) : null;
+          return {
             name: f.name,
             path: enforceContentPath(f.path, env),
             sha: f.sha,
             size: f.size,
             section: dir,
-          }),
-        );
+            title,
+          };
+        } catch {
+          return {
+            name: f.name,
+            path: enforceContentPath(f.path, env),
+            sha: f.sha,
+            size: f.size,
+            section: dir,
+            title: null,
+          };
+        }
+      });
+      const results = await fetchWithLimit(tasks, 5);
+      items.push(...results);
     }
     return jsonResponse(200, { items, contentDirs: dirs });
   } catch (err) {
