@@ -31,6 +31,9 @@ let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
 let selectedSection = CONTENT_DIRS[0];
+let editorInstanceHeight = 560;
+let templates = [];
+let editorInstanceHeight = 560;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -451,7 +454,6 @@ async function init() {
     if (e.target === shortcodeModal) toggleShortcodeModal(false);
   });
 
-  await loadTemplates().catch(() => {});
   loadShortcodes();
   setSections(CONTENT_DIRS);
   setEditorHeight();
