@@ -64,18 +64,21 @@ function showLogin() {
   loginView.classList.remove("hidden");
   listView.classList.add("hidden");
   editorView.classList.add("hidden");
+  logoutBtn.classList.add("hidden");
 }
 
 function showList() {
   loginView.classList.add("hidden");
   listView.classList.remove("hidden");
   editorView.classList.add("hidden");
+  logoutBtn.classList.remove("hidden");
 }
 
 function showEditor() {
   loginView.classList.add("hidden");
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
+  logoutBtn.classList.remove("hidden");
 }
 
 function slugify(text) {
