@@ -1,0 +1,21 @@
+# Dependencies and build artifacts
+node_modules/
+.npm/
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS / IDE noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Netlify CLI state
+.netlify/state.json
