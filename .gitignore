@@ -19,3 +19,4 @@ Thumbs.db
 
 # Netlify CLI state
 .netlify/state.json
+node_modules/
