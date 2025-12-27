@@ -18,6 +18,7 @@ const draftInput = document.getElementById("draftInput");
 const tagsInput = document.getElementById("tagsInput");
 const slugInput = document.getElementById("slugInput");
 const sectionInput = document.getElementById("sectionInput");
+const sectionFilter = document.getElementById("sectionFilter");
 const shortcodeBtn = document.getElementById("shortcodeBtn");
 const shortcodeModal = document.getElementById("shortcodeModal");
 const closeShortcodeBtn = document.getElementById("closeShortcodeBtn");
@@ -29,6 +30,7 @@ const toastEl = document.getElementById("toast");
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
+let selectedSection = CONTENT_DIRS[0];
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -159,7 +161,9 @@ async function loadPosts() {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
     return;
   }
-  const selected = sectionInput?.value || CONTENT_DIRS[0];
+  const selected = sectionFilter?.value || selectedSection || CONTENT_DIRS[0];
+  selectedSection = selected;
+  if (sectionInput) sectionInput.value = selected;
   data.items.forEach((item) => {
     const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
     if (section && section !== selected) return;
@@ -204,8 +208,8 @@ function newPost() {
   tagsInput.value = "";
   slugInput.value = "";
   editor.setMarkdown("");
-  if (sectionInput && sectionInput.options.length && !sectionInput.value) {
-    sectionInput.value = sectionInput.options[0].value;
+  if (sectionInput && selectedSection) {
+    sectionInput.value = selectedSection;
   }
   deletePostBtn.classList.add("hidden");
   showEditor();
@@ -230,7 +234,7 @@ async function savePost() {
   });
   const content = `${fm}${body}`;
   const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
-  const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : CONTENT_DIRS[0];
+  const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
   const path = currentPost?.path || `${chosenDir}/${filename}`;
   const payload = {
     path,
@@ -323,17 +327,31 @@ function renderShortcodeFields(sc) {
 }
 
 function setSections(sections) {
-  if (!sectionInput) return;
-  sectionInput.innerHTML = "";
-  (sections || []).forEach((section) => {
-    const opt = document.createElement("option");
-    opt.value = section;
-    opt.textContent = section.replace(/^content\//, "");
-    sectionInput.appendChild(opt);
-  });
-  if (!sectionInput.value && sectionInput.options.length) {
-    sectionInput.value = sectionInput.options[0].value;
+  const opts = (sections || []).map((section) => ({
+    value: section,
+    label: section.replace(/^content\//, ""),
+  }));
+  if (sectionInput) {
+    sectionInput.innerHTML = "";
+    opts.forEach(({ value, label }) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      sectionInput.appendChild(opt);
+    });
   }
+  if (sectionFilter) {
+    sectionFilter.innerHTML = "";
+    opts.forEach(({ value, label }) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      sectionFilter.appendChild(opt);
+    });
+  }
+  if (!selectedSection && opts.length) selectedSection = opts[0].value;
+  if (sectionInput && selectedSection) sectionInput.value = selectedSection;
+  if (sectionFilter && selectedSection) sectionFilter.value = selectedSection;
 }
 
 function applyTemplate(template, values) {
@@ -431,6 +449,14 @@ async function init() {
     if (err.message === "unauthorized") showLogin();
     else showToast(err.message, true);
   });
+
+  if (sectionFilter) {
+    sectionFilter.addEventListener("change", () => {
+      selectedSection = sectionFilter.value;
+      if (sectionInput) sectionInput.value = selectedSection;
+      loadPosts().catch(() => {});
+    });
+  }
 
   if (sectionInput) {
     sectionInput.addEventListener("change", () => {

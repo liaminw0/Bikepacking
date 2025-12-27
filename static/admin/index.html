@@ -28,7 +28,13 @@
 
     <section id="listView" class="card hidden">
       <div class="list-header">
-        <h1>Posts</h1>
+        <div class="list-title">
+          <h1>Posts</h1>
+          <label class="inline">
+            <span>Section</span>
+            <select id="sectionFilter"></select>
+          </label>
+        </div>
         <div class="actions">
           <button id="refreshBtn" class="ghost small">Refresh</button>
           <button id="newPostBtn" class="primary small">New post</button>
