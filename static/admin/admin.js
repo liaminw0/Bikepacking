@@ -342,17 +342,23 @@ async function loadShortcodes() {
 }
 
 async function ensureToastUI() {
-  loadCss("https://uicdn.toast.com/editor/latest/toastui-editor.min.css");
+  // Prefer local bundled assets to avoid CDN/MIME/blocked issues.
+  loadCss("toastui-editor.min.css");
   if (!window.toastui?.Editor) {
+    try {
+      await loadScript("toastui-editor-all.min.js");
+    } catch (e) {
+      console.warn("Local Toast UI load failed", e);
+    }
+  }
+  // Final fallback: attempt CDN if local not available.
+  if (!window.toastui?.Editor) {
+    loadCss("https://uicdn.toast.com/editor/latest/toastui-editor.min.css");
     try {
       await loadScript("https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js");
     } catch (e) {
       console.warn("Primary Toast UI CDN failed", e);
     }
-  }
-  if (!window.toastui?.Editor) {
-    loadCss("https://cdn.jsdelivr.net/npm/@toast-ui/editor@3.2.3/dist/toastui-editor.min.css");
-    await loadScript("https://cdn.jsdelivr.net/npm/@toast-ui/editor@3.2.3/dist/toastui-editor-all.min.js");
   }
   if (!window.toastui?.Editor) throw new Error("Toast UI editor failed to load");
 }
