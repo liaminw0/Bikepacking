@@ -1,0 +1,19 @@
+[
+  {
+    "name": "YouTube",
+    "description": "Embed a YouTube video",
+    "template": "{{< youtube id=\"${id}\" >}}",
+    "fields": [
+      { "key": "id", "label": "Video ID", "type": "text" }
+    ]
+  },
+  {
+    "name": "Callout",
+    "description": "Info/warn/tip callout",
+    "template": "{{< callout kind=\"${kind}\" >}}${text}{{< /callout >}}",
+    "fields": [
+      { "key": "kind", "label": "Kind", "type": "select", "options": ["info", "warn", "tip"] },
+      { "key": "text", "label": "Text", "type": "textarea" }
+    ]
+  }
+]

@@ -1,0 +1,106 @@
+import jwt from "jsonwebtoken";
+
+export const COOKIE_NAME = "hugo_admin";
+const WEEK = 7 * 24 * 60 * 60;
+
+const baseHeaders = {
+  "Content-Type": "application/json",
+};
+
+export function jsonResponse(statusCode, body, headers = {}) {
+  return {
+    statusCode,
+    headers: { ...baseHeaders, ...headers },
+    body: JSON.stringify(body),
+  };
+}
+
+export function unauthorized(message = "Unauthorized") {
+  return jsonResponse(401, { error: message });
+}
+
+export function getEnv() {
+  const {
+    ADMIN_PASSWORD,
+    JWT_SECRET,
+    GITHUB_TOKEN,
+    GITHUB_OWNER,
+    GITHUB_REPO,
+    GITHUB_BRANCH,
+  } = process.env;
+  if (!ADMIN_PASSWORD || !JWT_SECRET) {
+    throw new Error("Missing ADMIN_PASSWORD or JWT_SECRET");
+  }
+  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+    throw new Error("Missing GitHub configuration");
+  }
+  return {
+    adminPassword: ADMIN_PASSWORD,
+    jwtSecret: JWT_SECRET,
+    github: {
+      token: GITHUB_TOKEN,
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      branch: GITHUB_BRANCH || "main",
+    },
+  };
+}
+
+export function parseCookies(header = "") {
+  return header.split(";").reduce((acc, part) => {
+    const [k, v] = part.trim().split("=");
+    if (k) acc[k] = decodeURIComponent(v || "");
+    return acc;
+  }, {});
+}
+
+export function signToken(payload) {
+  const { jwtSecret } = getEnv();
+  return jwt.sign(payload, jwtSecret, { expiresIn: `${WEEK}s` });
+}
+
+export function verifyRequest(event) {
+  try {
+    const cookies = parseCookies(event.headers?.cookie || event.headers?.Cookie || "");
+    const token = cookies[COOKIE_NAME];
+    if (!token) return { ok: false, response: unauthorized() };
+    const { jwtSecret } = getEnv();
+    const payload = jwt.verify(token, jwtSecret);
+    return { ok: true, payload };
+  } catch (err) {
+    console.error("Auth error", err);
+    return { ok: false, response: unauthorized() };
+  }
+}
+
+export function authCookie(token) {
+  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${WEEK};${secure}`;
+}
+
+export function clearCookie() {
+  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0;${secure}`;
+}
+
+export function enforceContentPath(path) {
+  if (!path) throw new Error("Path required");
+  if (path.includes("..")) throw new Error("Invalid path");
+  if (!path.startsWith("content/posts/")) return `content/posts/${path}`;
+  return path;
+}
+
+export async function githubRequest(env, resourcePath, init = {}) {
+  const url = `https://api.github.com/repos/${env.github.owner}/${env.github.repo}${resourcePath}`;
+  const res = await fetch(url, {
+    method: init.method || "GET",
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${env.github.token}`,
+      "User-Agent": "hugo-admin",
+      ...(init.headers || {}),
+    },
+    body: init.body,
+  });
+  return res;
+}

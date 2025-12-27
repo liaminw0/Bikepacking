@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hugo Mobile Admin</title>
+  <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Hugo Admin</div>
+    <button id="logoutBtn" class="ghost small" aria-label="Logout">Logout</button>
+  </header>
+
+  <main class="page">
+    <section id="loginView" class="card">
+      <h1>Admin Login</h1>
+      <form id="loginForm">
+        <label>
+          Password
+          <input type="password" id="passwordInput" required autocomplete="current-password">
+        </label>
+        <button type="submit" class="primary block">Login</button>
+        <p class="hint">Protected by server-side JWT cookie.</p>
+      </form>
+    </section>
+
+    <section id="listView" class="card hidden">
+      <div class="list-header">
+        <h1>Posts</h1>
+        <div class="actions">
+          <button id="refreshBtn" class="ghost small">Refresh</button>
+          <button id="newPostBtn" class="primary small">New post</button>
+        </div>
+      </div>
+      <div id="postsContainer" class="list"></div>
+    </section>
+
+    <section id="editorView" class="card hidden">
+      <div class="editor-header">
+        <button id="backToListBtn" class="ghost small">← Posts</button>
+        <div class="editor-actions">
+          <button id="deletePostBtn" class="danger small hidden">Delete</button>
+          <button id="savePostBtn" class="primary">Save</button>
+        </div>
+      </div>
+      <form id="editorForm" class="editor-form">
+        <label>
+          Title
+          <input type="text" id="titleInput" required>
+        </label>
+        <label>
+          Date
+          <input type="datetime-local" id="dateInput" required>
+        </label>
+        <label class="row">
+          <span>Draft</span>
+          <input type="checkbox" id="draftInput">
+        </label>
+        <label>
+          Tags (comma separated)
+          <input type="text" id="tagsInput" placeholder="tag1, tag2">
+        </label>
+        <label>
+          Slug (optional)
+          <input type="text" id="slugInput" placeholder="auto from title">
+        </label>
+        <div class="shortcode-bar">
+          <span>Body</span>
+          <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+        </div>
+        <div id="editor"></div>
+      </form>
+    </section>
+  </main>
+
+  <div id="shortcodeModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Insert shortcode</h2>
+        <button id="closeShortcodeBtn" class="ghost small">✕</button>
+      </div>
+      <label>
+        Shortcode
+        <select id="shortcodeSelect"></select>
+      </label>
+      <div id="shortcodeFields"></div>
+      <div class="modal-actions">
+        <button id="insertShortcodeBtn" class="primary block">Insert</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
