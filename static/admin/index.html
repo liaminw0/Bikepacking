@@ -54,10 +54,6 @@
           Date
           <input type="datetime-local" id="dateInput" required>
         </label>
-        <label>
-          Section
-          <select id="sectionInput"></select>
-        </label>
         <label class="row">
           <span>Draft</span>
           <input type="checkbox" id="draftInput">
@@ -70,15 +66,12 @@
         Slug (optional)
         <input type="text" id="slugInput" placeholder="auto from title">
       </label>
-      <div class="shortcode-bar">
-        <span>Body</span>
-        <div class="shortcode-actions">
-          <button type="button" id="osmBtn" class="ghost small">OpenStreetMap</button>
+        <div class="shortcode-bar">
+          <span>Body</span>
           <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
         </div>
-      </div>
-      <div id="editor"></div>
-    </form>
+        <div id="editor"></div>
+      </form>
     </section>
   </main>
 

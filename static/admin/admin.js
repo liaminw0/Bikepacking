@@ -19,7 +19,6 @@ const tagsInput = document.getElementById("tagsInput");
 const slugInput = document.getElementById("slugInput");
 const sectionInput = document.getElementById("sectionInput");
 const shortcodeBtn = document.getElementById("shortcodeBtn");
-const osmBtn = document.getElementById("osmBtn");
 const shortcodeModal = document.getElementById("shortcodeModal");
 const closeShortcodeBtn = document.getElementById("closeShortcodeBtn");
 const shortcodeSelect = document.getElementById("shortcodeSelect");
@@ -160,28 +159,14 @@ async function loadPosts() {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
     return;
   }
-  const grouped = {};
   data.items.forEach((item) => {
+    const row = document.createElement("button");
+    row.className = "post-row";
+    row.type = "button";
     const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
-    grouped[section] = grouped[section] || [];
-    grouped[section].push(item);
-  });
-  Object.keys(grouped).sort().forEach((section) => {
-    const block = document.createElement("div");
-    block.className = "section-block";
-    block.innerHTML = `<h3>${section.replace(/^content\\//, "")}</h3>`;
-    const list = document.createElement("div");
-    list.className = "list";
-    grouped[section].forEach((item) => {
-      const row = document.createElement("button");
-      row.className = "post-row";
-      row.type = "button";
-      row.innerHTML = `<div><strong>${item.name}</strong><br><span>${item.path}</span></div><span>${item.size}b</span>`;
-      row.addEventListener("click", () => openPost(item.path));
-      list.appendChild(row);
-    });
-    block.appendChild(list);
-    postsContainer.appendChild(block);
+    row.innerHTML = `<div><strong>${item.name}</strong><br><span>${section}</span></div><span>${item.size}b</span>`;
+    row.addEventListener("click", () => openPost(item.path));
+    postsContainer.appendChild(row);
   });
 }
 
@@ -308,15 +293,6 @@ function toggleShortcodeModal(open) {
   shortcodeModal.classList.toggle("hidden", !open);
 }
 
-function openShortcodeModal(prefillName) {
-  if (prefillName) {
-    shortcodeSelect.value = prefillName;
-    const sc = shortcodes.find((s) => s.name === prefillName);
-    if (sc) renderShortcodeFields(sc);
-  }
-  toggleShortcodeModal(true);
-}
-
 function renderShortcodeFields(sc) {
   shortcodeFields.innerHTML = "";
   sc.fields.forEach((field) => {
@@ -432,7 +408,6 @@ async function init() {
   savePostBtn.addEventListener("click", (e) => { e.preventDefault(); savePost(); });
   deletePostBtn.addEventListener("click", deletePost);
   shortcodeBtn.addEventListener("click", () => toggleShortcodeModal(true));
-  osmBtn.addEventListener("click", () => openShortcodeModal("OpenStreetMap"));
   closeShortcodeBtn.addEventListener("click", () => toggleShortcodeModal(false));
   shortcodeSelect.addEventListener("change", () => {
     const sc = shortcodes.find((s) => s.name === shortcodeSelect.value);

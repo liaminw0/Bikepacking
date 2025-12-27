@@ -15,16 +15,5 @@
       { "key": "kind", "label": "Kind", "type": "select", "options": ["info", "warn", "tip"] },
       { "key": "text", "label": "Text", "type": "textarea" }
     ]
-  },
-  {
-    "name": "OpenStreetMap",
-    "description": "Embed a map with marker",
-    "template": "{{< openstreetmap lat=\"${lat}\" lon=\"${lon}\" zoom=\"${zoom}\" delta=\"${delta}\" >}}",
-    "fields": [
-      { "key": "lat", "label": "Latitude", "type": "text" },
-      { "key": "lon", "label": "Longitude", "type": "text" },
-      { "key": "zoom", "label": "Zoom (optional)", "type": "text" },
-      { "key": "delta", "label": "Bounds delta (optional)", "type": "text" }
-    ]
   }
 ]
