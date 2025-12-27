@@ -45,7 +45,7 @@ export function getEnv() {
       repo: GITHUB_REPO,
       branch: GITHUB_BRANCH || "main",
     },
-    contentDirs: (CONTENT_DIRS || CONTENT_DIR || "content/posts")
+    contentDirs: (CONTENT_DIRS || CONTENT_DIR || "content/journal,content/photos")
       .split(",")
       .map((d) => d.trim())
       .filter(Boolean)
@@ -96,7 +96,6 @@ export function enforceContentPath(path, env) {
   const bases = env?.contentDirs?.length ? env.contentDirs : ["content/posts"];
   const match = bases.find((b) => path.startsWith(`${b}/`));
   if (match) return path;
-  // If not matched, prefix with the first allowed base.
   return `${bases[0]}/${path.replace(/^\/+/, "")}`;
 }
 

@@ -1,4 +1,4 @@
-const CONTENT_DIRS = window.CONTENT_DIRS || [window.CONTENT_DIR || "content/posts"];
+const CONTENT_DIRS = window.CONTENT_DIRS || [window.CONTENT_DIR || "content/journal", "content/photos"];
 const editorEl = document.getElementById("editor");
 const loginView = document.getElementById("loginView");
 const listView = document.getElementById("listView");
@@ -387,8 +387,6 @@ async function ensureToastUI() {
 
 async function init() {
   await ensureToastUI();
-  setSections(CONTENT_DIRS);
-
   editor = new toastui.Editor({
     el: editorEl,
     height: "560px",
@@ -422,6 +420,8 @@ async function init() {
   });
 
   loadShortcodes();
+  setSections(CONTENT_DIRS);
+
   loadPosts().then(showList).catch((err) => {
     if (err.message === "unauthorized") showLogin();
     else showToast(err.message, true);
