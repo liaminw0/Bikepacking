@@ -425,7 +425,6 @@ async function init() {
     ],
   });
 
-  loginForm.addEventListener("submit", login);
   logoutBtn.addEventListener("click", logout);
   refreshBtn.addEventListener("click", () => loadPosts().catch(() => {}));
   newPostBtn.addEventListener("click", newPost);
@@ -454,6 +453,7 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  loginForm.addEventListener("submit", login);
   init().catch((err) => {
     console.error(err);
     showToast(err.message || "Failed to load editor", true);
