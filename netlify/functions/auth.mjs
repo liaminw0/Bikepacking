@@ -29,6 +29,11 @@ export function getEnv() {
     GITHUB_BRANCH,
     CONTENT_DIR,
     CONTENT_DIRS,
+    NEXTCLOUD_BASE_URL,
+    NEXTCLOUD_USERNAME,
+    NEXTCLOUD_PASSWORD,
+    NEXTCLOUD_FOLDER,
+    NEXTCLOUD_PUBLIC_BASE_URL,
   } = process.env;
   if (!ADMIN_PASSWORD || !JWT_SECRET) {
     throw new Error("Missing ADMIN_PASSWORD or JWT_SECRET");
@@ -50,6 +55,13 @@ export function getEnv() {
       .map((d) => d.trim())
       .filter(Boolean)
       .map((d) => d.replace(/^\//, "").replace(/\/+$/, "")),
+    nextcloud: {
+      baseUrl: NEXTCLOUD_BASE_URL?.replace(/\/+$/, "") || null,
+      username: NEXTCLOUD_USERNAME || null,
+      password: NEXTCLOUD_PASSWORD || null,
+      folder: (NEXTCLOUD_FOLDER || "").replace(/^\/+|\/+$/g, ""),
+      publicBaseUrl: (NEXTCLOUD_PUBLIC_BASE_URL || NEXTCLOUD_BASE_URL || "").replace(/\/+$/, ""),
+    },
   };
 }
 
@@ -112,4 +124,20 @@ export async function githubRequest(env, resourcePath, init = {}) {
     body: init.body,
   });
   return res;
+}
+
+export function getNextcloudConfig(required = true) {
+  const cfg = getEnv().nextcloud || {};
+  const baseUrl = cfg.baseUrl?.replace(/\/+$/, "");
+  if ((!baseUrl || !cfg.username || !cfg.password) && required) {
+    throw new Error("Missing Nextcloud configuration");
+  }
+  if (!baseUrl || !cfg.username || !cfg.password) return null;
+  return {
+    baseUrl,
+    username: cfg.username,
+    password: cfg.password,
+    folder: (cfg.folder || "").replace(/^\/+|\/+$/g, ""),
+    publicBaseUrl: (cfg.publicBaseUrl || baseUrl).replace(/\/+$/, ""),
+  };
 }

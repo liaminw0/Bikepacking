@@ -78,7 +78,10 @@
       </label>
         <div class="shortcode-bar">
           <span>Body</span>
-          <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+          <div class="shortcode-actions">
+            <button type="button" id="mediaBtn" class="ghost small">Images</button>
+            <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+          </div>
         </div>
         <div id="editor"></div>
       </form>
@@ -98,6 +101,29 @@
       <div id="shortcodeFields"></div>
       <div class="modal-actions">
         <button id="insertShortcodeBtn" class="primary block">Insert</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mediaModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content media-modal">
+      <div class="modal-header">
+        <h2>Images</h2>
+        <button id="closeMediaBtn" class="ghost small">✕</button>
+      </div>
+      <div class="media-upload">
+        <label class="file-drop">
+          <input type="file" id="imageInput" accept="image/*">
+          <div>
+            <strong>Select or drop an image</strong>
+            <p class="hint">Images stay in Nextcloud. Credentials are kept server-side.</p>
+          </div>
+        </label>
+        <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
+        <p class="hint" id="uploadHint">Max 10MB. Images only.</p>
+      </div>
+      <div class="media-gallery" id="mediaGallery">
+        <p class="hint">Loading images...</p>
       </div>
     </div>
   </div>

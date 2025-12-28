@@ -167,6 +167,11 @@ button.block { width: 100%; }
   color: var(--muted);
   margin: 0.5rem 0 0.35rem;
 }
+.shortcode-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
 
 .toastui-editor-defaultUI {
   border: 1px solid var(--border);
@@ -195,6 +200,66 @@ button.block { width: 100%; }
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.media-modal {
+  display: grid;
+  gap: 0.75rem;
+}
+.media-upload {
+  display: grid;
+  gap: 0.5rem;
+}
+.file-drop {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  cursor: pointer;
+  position: relative;
+}
+.file-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.media-gallery {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  max-height: 360px;
+  overflow-y: auto;
+}
+.media-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.35rem;
+  background: var(--bg);
+  cursor: pointer;
+}
+.media-item:hover {
+  border-color: var(--link);
+}
+.media-thumb {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--border);
+}
+.media-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .toast {

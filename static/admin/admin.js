@@ -26,12 +26,19 @@ const shortcodeSelect = document.getElementById("shortcodeSelect");
 const shortcodeFields = document.getElementById("shortcodeFields");
 const insertShortcodeBtn = document.getElementById("insertShortcodeBtn");
 const toastEl = document.getElementById("toast");
+const mediaBtn = document.getElementById("mediaBtn");
+const mediaModal = document.getElementById("mediaModal");
+const closeMediaBtn = document.getElementById("closeMediaBtn");
+const imageInput = document.getElementById("imageInput");
+const uploadImageBtn = document.getElementById("uploadImageBtn");
+const mediaGallery = document.getElementById("mediaGallery");
 
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
 let selectedSection = CONTENT_DIRS[0];
 let editorInstanceHeight = 560;
+let mediaItems = [];
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -80,6 +87,120 @@ function showEditor() {
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
+}
+
+function toggleMediaModal(open) {
+  if (!mediaModal) return;
+  mediaModal.classList.toggle("hidden", !open);
+  if (open) loadMediaGallery().catch(() => {});
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || "";
+      const base64 = typeof result === "string" ? result.split(",").pop() : "";
+      resolve(base64 || "");
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderMediaGallery(items = []) {
+  if (!mediaGallery) return;
+  if (!items.length) {
+    mediaGallery.innerHTML = "<p class='hint'>No images in Nextcloud yet.</p>";
+    return;
+  }
+  mediaGallery.innerHTML = "";
+  items.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "media-item";
+    const img = document.createElement("img");
+    img.src = item.url;
+    img.alt = item.name || "Image";
+    img.className = "media-thumb";
+    const meta = document.createElement("div");
+    meta.className = "media-meta";
+    const label = document.createElement("span");
+    label.textContent = item.name || "Image";
+    const size = document.createElement("span");
+    size.textContent = item.size ? `${Math.round(item.size / 1024)}kb` : "";
+    meta.appendChild(label);
+    meta.appendChild(size);
+    btn.appendChild(img);
+    btn.appendChild(meta);
+    btn.addEventListener("click", () => insertImage(item.url, item.name));
+    mediaGallery.appendChild(btn);
+  });
+}
+
+async function loadMediaGallery() {
+  if (!mediaGallery) return;
+  mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+  try {
+    const data = await api("listImages");
+    mediaItems = Array.isArray(data.items) ? data.items : [];
+    renderMediaGallery(mediaItems);
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
+    mediaGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    showToast(err.message, true);
+  }
+}
+
+function insertImage(url, name = "image") {
+  if (!editor) return;
+  const alt = (name || "image").replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+  const snippet = `![${alt}](${url})`;
+  editor.insertText(snippet + "\n");
+  toggleMediaModal(false);
+  showToast("Image inserted");
+}
+
+async function uploadImage() {
+  if (!imageInput || !imageInput.files || !imageInput.files.length) {
+    showToast("Choose an image first", true);
+    return;
+  }
+  const file = imageInput.files[0];
+  if (!file.type.startsWith("image/")) {
+    showToast("Images only", true);
+    return;
+  }
+  try {
+    if (uploadImageBtn) uploadImageBtn.disabled = true;
+    const base64 = await fileToBase64(file);
+    const payload = {
+      name: file.name,
+      contentType: file.type,
+      data: base64,
+    };
+    const res = await api("uploadImage", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res?.url) {
+      insertImage(res.url, res.name || file.name);
+      await loadMediaGallery();
+      imageInput.value = "";
+      showToast("Image uploaded");
+    }
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
+    showToast(err.message, true);
+  } finally {
+    if (uploadImageBtn) uploadImageBtn.disabled = false;
+  }
 }
 
 function slugify(text) {
@@ -452,6 +573,14 @@ async function init() {
   shortcodeModal.addEventListener("click", (e) => {
     if (e.target === shortcodeModal) toggleShortcodeModal(false);
   });
+  if (mediaBtn) mediaBtn.addEventListener("click", () => toggleMediaModal(true));
+  if (closeMediaBtn) closeMediaBtn.addEventListener("click", () => toggleMediaModal(false));
+  if (uploadImageBtn) uploadImageBtn.addEventListener("click", uploadImage);
+  if (mediaModal) {
+    mediaModal.addEventListener("click", (e) => {
+      if (e.target === mediaModal) toggleMediaModal(false);
+    });
+  }
 
   loadShortcodes();
   setSections(CONTENT_DIRS);
