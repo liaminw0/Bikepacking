@@ -45,6 +45,7 @@ let shortcodes = [];
 let selectedSection = CONTENT_DIRS[0];
 let editorInstanceHeight = 560;
 let mediaItems = [];
+let currentPreviewUrl = null;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -188,6 +189,10 @@ function setUploadProgress(percent) {
 
 function showUploadPreview(url, name = "image") {
   if (!uploadPreview || !uploadPreviewImg) return;
+  if (currentPreviewUrl && currentPreviewUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(currentPreviewUrl);
+  }
+  currentPreviewUrl = url;
   uploadPreviewImg.src = url;
   uploadPreviewImg.alt = name;
   uploadPreview.classList.remove("hidden");
@@ -196,8 +201,28 @@ function showUploadPreview(url, name = "image") {
 function clearUploadSelection() {
   if (uploadPreview) uploadPreview.classList.add("hidden");
   if (uploadPreviewImg) uploadPreviewImg.removeAttribute("src");
+  if (currentPreviewUrl && currentPreviewUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(currentPreviewUrl);
+  }
+  currentPreviewUrl = null;
   if (imageInput) imageInput.value = "";
   toggleUploadProgress(false);
+}
+
+function handleLocalFileSelection() {
+  if (!imageInput || !imageInput.files || !imageInput.files.length) {
+    clearUploadSelection();
+    return;
+  }
+  const file = imageInput.files[0];
+  if (!file.type.startsWith("image/")) {
+    showToast("Images only", true);
+    clearUploadSelection();
+    return;
+  }
+  toggleUploadProgress(false);
+  const previewUrl = URL.createObjectURL(file);
+  showUploadPreview(previewUrl, file.name);
 }
 
 async function uploadWithProgress(payload, onProgress) {
@@ -646,6 +671,9 @@ async function init() {
       e.stopPropagation();
       clearUploadSelection();
     });
+  }
+  if (imageInput) {
+    imageInput.addEventListener("change", handleLocalFileSelection);
   }
   if (mediaModal) {
     mediaModal.addEventListener("click", (e) => {
