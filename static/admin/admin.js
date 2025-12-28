@@ -396,6 +396,7 @@ async function uploadBulkImages() {
         data: base64,
       };
       await uploadWithProgress(payload, (p) => setBulkProgress(Math.max(10, p), i + 1, files.length));
+      await loadMediaGallery().catch(() => {});
       setBulkProgress(100, i + 1, files.length);
       uploaded += 1;
     }
