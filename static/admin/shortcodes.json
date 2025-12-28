@@ -15,5 +15,14 @@
       { "key": "kind", "label": "Kind", "type": "select", "options": ["info", "warn", "tip"] },
       { "key": "text", "label": "Text", "type": "textarea" }
     ]
+  },
+  {
+    "name": "OpenStreetMap",
+    "description": "Embed an OpenStreetMap map",
+    "template": "{{< openstreetmap lat=\"${lat}\" lon=\"${lon}\" >}}",
+    "fields": [
+      { "key": "lat", "label": "Latitude", "type": "text" },
+      { "key": "lon", "label": "Longitude", "type": "text" }
+    ]
   }
 ]
