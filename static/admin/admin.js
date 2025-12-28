@@ -144,6 +144,8 @@ function renderMediaGallery(items = []) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "media-item";
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "media-thumb-wrap";
     const img = document.createElement("img");
     img.src = item.url;
     img.alt = item.name || "Image";
@@ -165,7 +167,8 @@ function renderMediaGallery(items = []) {
     size.textContent = item.size ? `${Math.round(item.size / 1024)}kb` : "";
     meta.appendChild(label);
     meta.appendChild(size);
-    btn.appendChild(img);
+    thumbWrap.appendChild(img);
+    btn.appendChild(thumbWrap);
     btn.appendChild(viewBtn);
     btn.appendChild(meta);
     btn.addEventListener("click", () => insertImage(item.url, item.name));
