@@ -41,6 +41,29 @@
         </div>
       </div>
       <div id="postsContainer" class="list"></div>
+
+      <div class="uploads-panel">
+        <div class="list-header">
+          <div class="list-title">
+            <h2>All uploads</h2>
+            <span class="hint">From Nextcloud</span>
+          </div>
+          <div class="actions">
+            <label class="ghost small upload-multi-btn">
+              <input type="file" id="bulkImageInput" accept="image/*" multiple>
+              Select images
+            </label>
+            <button type="button" id="bulkUploadBtn" class="primary small">Upload selected</button>
+          </div>
+        </div>
+        <div class="upload-progress hidden" id="bulkUploadProgress">
+          <div class="upload-progress__bar" id="bulkUploadProgressBar"></div>
+          <span class="upload-progress__label" id="bulkUploadProgressLabel">0%</span>
+        </div>
+        <div class="media-gallery" id="allUploadsGallery">
+          <p class="hint">Loading images...</p>
+        </div>
+      </div>
     </section>
 
     <section id="editorView" class="card hidden">

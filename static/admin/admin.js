@@ -35,6 +35,12 @@ const imagePreviewImg = document.getElementById("imagePreviewImg");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
+const allUploadsGallery = document.getElementById("allUploadsGallery");
+const bulkImageInput = document.getElementById("bulkImageInput");
+const bulkUploadBtn = document.getElementById("bulkUploadBtn");
+const bulkUploadProgress = document.getElementById("bulkUploadProgress");
+const bulkUploadProgressBar = document.getElementById("bulkUploadProgressBar");
+const bulkUploadProgressLabel = document.getElementById("bulkUploadProgressLabel");
 const fileDrop = document.getElementById("fileDrop");
 const uploadProgress = document.getElementById("uploadProgress");
 const uploadProgressBar = document.getElementById("uploadProgressBar");
@@ -135,13 +141,13 @@ function fileToBase64(file) {
   });
 }
 
-function renderMediaGallery(items = []) {
-  if (!mediaGallery) return;
+function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
+  if (!target) return;
   if (!items.length) {
-    mediaGallery.innerHTML = "<p class='hint'>No images in Nextcloud yet.</p>";
+    target.innerHTML = "<p class='hint'>No images in Nextcloud yet.</p>";
     return;
   }
-  mediaGallery.innerHTML = "";
+  target.innerHTML = "";
   items.forEach((item) => {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -173,24 +179,29 @@ function renderMediaGallery(items = []) {
     btn.appendChild(thumbWrap);
     btn.appendChild(viewBtn);
     btn.appendChild(meta);
-    btn.addEventListener("click", () => insertImage(item.url, item.name));
-    mediaGallery.appendChild(btn);
+    btn.addEventListener("click", () => {
+      if (typeof onSelect === "function") onSelect(item);
+      else insertImage(item.url, item.name);
+    });
+    target.appendChild(btn);
   });
 }
 
 async function loadMediaGallery() {
-  if (!mediaGallery) return;
-  mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+  if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+  if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Loading images...</p>";
   try {
     const data = await api("listImages");
     mediaItems = Array.isArray(data.items) ? data.items : [];
-    renderMediaGallery(mediaItems);
+    renderMediaGallery(mediaItems, mediaGallery, (item) => insertImage(item.url, item.name));
+    renderMediaGallery(mediaItems, allUploadsGallery, (item) => openImagePreview(item.url, item.name));
   } catch (err) {
     if (err.message === "unauthorized") {
       showLogin();
       return;
     }
-    mediaGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
     showToast(err.message, true);
   }
 }
@@ -218,6 +229,22 @@ function setUploadProgress(percent) {
   const clamped = Math.min(100, Math.max(0, Math.round(percent)));
   uploadProgressBar.style.setProperty("--upload-progress", `${clamped}%`);
   uploadProgressLabel.textContent = `${clamped}%`;
+}
+
+function toggleBulkProgress(show) {
+  if (!bulkUploadProgress) return;
+  bulkUploadProgress.classList.toggle("hidden", !show);
+  if (!show) {
+    bulkUploadProgressBar?.style.setProperty("--upload-progress", "0%");
+    if (bulkUploadProgressLabel) bulkUploadProgressLabel.textContent = "0%";
+  }
+}
+
+function setBulkProgress(percent, index = 1, total = 1) {
+  if (!bulkUploadProgressBar || !bulkUploadProgressLabel) return;
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  bulkUploadProgressBar.style.setProperty("--upload-progress", `${clamped}%`);
+  bulkUploadProgressLabel.textContent = `File ${index}/${total} — ${clamped}%`;
 }
 
 function showUploadPreview(url, name = "image") {
@@ -341,6 +368,49 @@ async function uploadImage() {
   } finally {
     if (uploadImageBtn) uploadImageBtn.disabled = false;
     setTimeout(() => toggleUploadProgress(false), 600);
+  }
+}
+
+async function uploadBulkImages() {
+  if (!bulkImageInput || !bulkImageInput.files || !bulkImageInput.files.length) {
+    showToast("Select images to upload", true);
+    return;
+  }
+  const files = Array.from(bulkImageInput.files).filter((f) => f.type.startsWith("image/"));
+  if (!files.length) {
+    showToast("Images only", true);
+    bulkImageInput.value = "";
+    return;
+  }
+  let uploaded = 0;
+  try {
+    toggleBulkProgress(true);
+    if (bulkUploadBtn) bulkUploadBtn.disabled = true;
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      setBulkProgress(5, i + 1, files.length);
+      const base64 = await fileToBase64(file);
+      const payload = {
+        name: file.name,
+        contentType: file.type,
+        data: base64,
+      };
+      await uploadWithProgress(payload, (p) => setBulkProgress(Math.max(10, p), i + 1, files.length));
+      setBulkProgress(100, i + 1, files.length);
+      uploaded += 1;
+    }
+    showToast(`Uploaded ${uploaded}/${files.length} images`);
+    bulkImageInput.value = "";
+    await loadMediaGallery();
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
+    showToast(err.message, true);
+  } finally {
+    if (bulkUploadBtn) bulkUploadBtn.disabled = false;
+    setTimeout(() => toggleBulkProgress(false), 600);
   }
 }
 
@@ -550,6 +620,7 @@ async function login(event) {
     await api("login", { method: "POST", body: JSON.stringify({ password }) });
     passwordInput.value = "";
     await loadPosts();
+    await loadMediaGallery().catch(() => {});
     showList();
   } catch (err) {
     if (err.message === "unauthorized") return showToast("Bad password", true);
@@ -699,7 +770,10 @@ async function init() {
   });
 
   logoutBtn.addEventListener("click", logout);
-  refreshBtn.addEventListener("click", () => loadPosts().catch(() => {}));
+  refreshBtn.addEventListener("click", () => {
+    loadPosts().catch(() => {});
+    loadMediaGallery().catch(() => {});
+  });
   newPostBtn.addEventListener("click", newPost);
   backToListBtn.addEventListener("click", showList);
   savePostBtn.addEventListener("click", (e) => { e.preventDefault(); savePost(); });
@@ -717,6 +791,7 @@ async function init() {
   if (mediaBtn) mediaBtn.addEventListener("click", () => toggleMediaModal(true));
   if (closeMediaBtn) closeMediaBtn.addEventListener("click", () => toggleMediaModal(false));
   if (uploadImageBtn) uploadImageBtn.addEventListener("click", uploadImage);
+  if (bulkUploadBtn) bulkUploadBtn.addEventListener("click", uploadBulkImages);
   if (clearUploadBtn) {
     clearUploadBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -763,10 +838,13 @@ async function init() {
   setEditorHeight();
   window.addEventListener("resize", setEditorHeight);
 
-  loadPosts().then(showList).catch((err) => {
-    if (err.message === "unauthorized") showLogin();
-    else showToast(err.message, true);
-  });
+  loadPosts()
+    .then(() => loadMediaGallery())
+    .then(() => showList())
+    .catch((err) => {
+      if (err.message === "unauthorized") showLogin();
+      else showToast(err.message, true);
+    });
 
   if (sectionFilter) {
     sectionFilter.addEventListener("change", () => {
