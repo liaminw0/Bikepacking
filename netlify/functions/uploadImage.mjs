@@ -12,17 +12,19 @@ const basicAuthHeaders = (cfg) => ({
   Authorization: `Basic ${Buffer.from(`${cfg.username}:${cfg.password}`).toString("base64")}`,
 });
 
-const buildTargetUrl = (cfg, fileName = "") => {
+const buildTargetUrl = (cfg, fileName = "", subfolder = "") => {
   const base = cfg.baseUrl.replace(/\/+$/, "");
   const folder = cfg.folder ? `/${cfg.folder.replace(/^\/+|\/+$/g, "")}` : "";
+  const extra = subfolder ? `/${subfolder.replace(/^\/+|\/+$/g, "")}` : "";
   const suffix = fileName ? `/${encodeURIComponent(fileName)}` : "/";
-  return `${base}${folder}${suffix}`;
+  return `${base}${folder}${extra}${suffix}`;
 };
 
-const buildPublicUrl = (cfg, fileName) => {
+const buildPublicUrl = (cfg, fileName, subfolder = "") => {
   const base = (cfg.publicBaseUrl || cfg.baseUrl || "").replace(/\/+$/, "");
   const folder = cfg.folder ? `/${cfg.folder.replace(/^\/+|\/+$/g, "")}` : "";
-  return `${base}${folder}/${encodeURIComponent(fileName)}`;
+  const extra = subfolder ? `/${subfolder.replace(/^\/+|\/+$/g, "")}` : "";
+  return `${base}${folder}${extra}/${encodeURIComponent(fileName)}`;
 };
 
 const sanitizeName = (name = "", extOverride = "") => {
@@ -41,6 +43,25 @@ const convertToWebp = async (buffer) => {
     log("convert error", err?.message);
     throw new Error("Invalid or unsupported image");
   }
+};
+
+const uploadToNextcloud = async (url, buffer, cfg, contentType) => {
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      ...basicAuthHeaders(cfg),
+      "Content-Type": contentType,
+    },
+    body: buffer,
+  });
+  const body = await res.text();
+  if (!res.ok) {
+    console.error("Nextcloud upload failed", res.status, body);
+    const status = res.status === 401 ? 502 : 500;
+    const snippet = typeof body === "string" ? body.slice(0, 200) : "";
+    return { ok: false, status, detail: snippet };
+  }
+  return { ok: true };
 };
 
 export const handler = async (event) => {
@@ -95,31 +116,34 @@ export const handler = async (event) => {
     return jsonResponse(400, { error: "Image too large after processing" });
   }
 
-  const fileName = sanitizeName(name, ".webp");
-  const targetUrl = buildTargetUrl(cfg, fileName);
-  log("target", targetUrl);
+  const webpName = sanitizeName(name, ".webp");
+  const webpUrl = buildTargetUrl(cfg, webpName);
+  const originalName = sanitizeName(name);
+  const originalUrl = buildTargetUrl(cfg, originalName, "Originals");
+  log("target webp", webpUrl);
+  log("target original", originalUrl);
 
   try {
-    const res = await fetch(targetUrl, {
-      method: "PUT",
-      headers: {
-        ...basicAuthHeaders(cfg),
-        "Content-Type": "image/webp",
-      },
-      body: processedBuffer,
-    });
-    const body = await res.text();
-    if (!res.ok) {
-      console.error("Nextcloud upload failed", res.status, body);
-      const status = res.status === 401 ? 502 : 500;
-      const snippet = typeof body === "string" ? body.slice(0, 200) : "";
-      return jsonResponse(status, {
-        error: `Nextcloud upload failed (${res.status})`,
-        detail: snippet,
+    const webpUpload = await uploadToNextcloud(webpUrl, processedBuffer, cfg, "image/webp");
+    if (!webpUpload.ok) {
+      return jsonResponse(webpUpload.status, {
+        error: `Nextcloud upload failed (${webpUpload.status})`,
+        detail: webpUpload.detail,
       });
     }
-    const publicUrl = buildPublicUrl(cfg, fileName);
-    return jsonResponse(200, { ok: true, url: publicUrl, name: fileName });
+
+    // Sequentially upload original to avoid parallel bandwidth spikes.
+    const originalContentType = contentType || "application/octet-stream";
+    const originalUpload = await uploadToNextcloud(originalUrl, buffer, cfg, originalContentType);
+    if (!originalUpload.ok) {
+      return jsonResponse(originalUpload.status, {
+        error: `Original upload failed (${originalUpload.status})`,
+        detail: originalUpload.detail,
+      });
+    }
+
+    const publicUrl = buildPublicUrl(cfg, webpName);
+    return jsonResponse(200, { ok: true, url: publicUrl, name: webpName });
   } catch (err) {
     console.error("Upload handler error", err);
     return jsonResponse(500, { error: err?.message || "Failed to upload image" });

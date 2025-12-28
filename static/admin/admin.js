@@ -99,6 +99,7 @@ function showEditor() {
 
 function toggleMediaModal(open) {
   if (!mediaModal) return;
+  if (open) clearUploadSelection(); // reset preview each time the modal opens
   mediaModal.classList.toggle("hidden", !open);
   if (open) loadMediaGallery().catch(() => {});
 }
