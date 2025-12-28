@@ -1,5 +1,4 @@
 import { getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
-import sharp from "sharp";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB guardrail
 
@@ -26,6 +25,14 @@ const sanitizeNameToWebp = (name = "") => {
   const base = parts.join(".") || "image";
   const safeBase = base.replace(/[^a-z0-9-_]/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
   return `${safeBase || "image"}.webp`;
+};
+
+const sanitizeNamePreserveExt = (name = "") => {
+  const parts = name.split(".");
+  const ext = parts.length > 1 ? `.${parts.pop()}` : ".png";
+  const base = parts.join(".") || "image";
+  const safeBase = base.replace(/[^a-z0-9-_]/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return `${safeBase || "image"}${ext}`;
 };
 
 export const handler = async (event) => {
@@ -61,19 +68,32 @@ export const handler = async (event) => {
     return jsonResponse(400, { error: "Image too large (max 10MB)" });
   }
 
-  const fileName = sanitizeNameToWebp(name);
-  const targetUrl = buildTargetUrl(cfg, fileName);
+  let fileName = sanitizeNameToWebp(name);
 
   try {
-    const webpBuffer = await sharp(buffer).rotate().webp({ quality: 82 }).toBuffer();
+    let uploadBuffer = buffer;
+    let uploadType = "application/octet-stream";
 
-    const res = await fetch(targetUrl, {
+    try {
+      const sharp = (await import("sharp")).default;
+      uploadBuffer = await sharp(buffer).rotate().webp({ quality: 82 }).toBuffer();
+      uploadType = "image/webp";
+      fileName = sanitizeNameToWebp(name);
+    } catch (err) {
+      console.error("Sharp conversion failed, uploading original", err);
+      uploadBuffer = buffer;
+      uploadType = contentType?.startsWith("image/") ? contentType : "application/octet-stream";
+      fileName = sanitizeNamePreserveExt(name);
+    }
+
+    const putUrl = buildTargetUrl(cfg, fileName);
+    const res = await fetch(putUrl, {
       method: "PUT",
       headers: {
         ...basicAuthHeaders(cfg),
-        "Content-Type": "image/webp",
+        "Content-Type": uploadType,
       },
-      body: webpBuffer,
+      body: uploadBuffer,
     });
     const body = await res.text();
     if (!res.ok) {
