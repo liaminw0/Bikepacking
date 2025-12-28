@@ -42,6 +42,7 @@ const uploadProgressLabel = document.getElementById("uploadProgressLabel");
 const uploadPreview = document.getElementById("uploadPreview");
 const uploadPreviewImg = document.getElementById("uploadPreviewImg");
 const clearUploadBtn = document.getElementById("clearUploadBtn");
+const viewUploadBtn = document.getElementById("viewUploadBtn");
 
 let editor;
 let currentPost = null; // { path, sha }
@@ -50,6 +51,7 @@ let selectedSection = CONTENT_DIRS[0];
 let editorInstanceHeight = 560;
 let mediaItems = [];
 let currentPreviewUrl = null;
+let currentPreviewName = "image";
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -224,6 +226,7 @@ function showUploadPreview(url, name = "image") {
     URL.revokeObjectURL(currentPreviewUrl);
   }
   currentPreviewUrl = url;
+  currentPreviewName = name || "image";
   uploadPreviewImg.src = url;
   uploadPreviewImg.alt = name;
   uploadPreview.classList.remove("hidden");
@@ -236,6 +239,7 @@ function clearUploadSelection() {
     URL.revokeObjectURL(currentPreviewUrl);
   }
   currentPreviewUrl = null;
+  currentPreviewName = "image";
   if (imageInput) imageInput.value = "";
   toggleUploadProgress(false);
 }
@@ -718,6 +722,13 @@ async function init() {
       e.preventDefault();
       e.stopPropagation();
       clearUploadSelection();
+    });
+  }
+  if (viewUploadBtn) {
+    viewUploadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentPreviewUrl) openImagePreview(currentPreviewUrl, currentPreviewName);
     });
   }
   if (closeImagePreviewBtn) closeImagePreviewBtn.addEventListener("click", closeImagePreview);
