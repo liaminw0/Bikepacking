@@ -14,7 +14,8 @@ const buildTargetUrl = (cfg, fileName = "") => {
 };
 
 const buildPublicUrl = (cfg, fileName) => {
-  const base = cfg.publicBaseUrl.replace(/\/+$/, "");
+  const base = (cfg.publicBaseUrl || cfg.baseUrl || "").replace(/\/+$/, "");
+  if (!base) throw new Error("Missing public URL base");
   const folder = cfg.folder ? `/${cfg.folder.replace(/^\/+|\/+$/g, "")}` : "";
   return `${base}${folder}/${encodeURIComponent(fileName)}`;
 };
@@ -99,12 +100,18 @@ export const handler = async (event) => {
     if (!res.ok) {
       console.error("Nextcloud upload failed", res.status, body);
       const status = res.status === 401 ? 502 : 500;
-      return jsonResponse(status, { error: "Failed to upload image" });
+      return jsonResponse(status, { error: `Upload failed (${res.status})` });
     }
-    const publicUrl = buildPublicUrl(cfg, fileName);
+    let publicUrl;
+    try {
+      publicUrl = buildPublicUrl(cfg, fileName);
+    } catch (e) {
+      console.error("Public URL build failed", e);
+      return jsonResponse(500, { error: "Upload ok but public URL missing" });
+    }
     return jsonResponse(200, { ok: true, url: publicUrl, name: fileName });
   } catch (err) {
-    console.error(err);
-    return jsonResponse(500, { error: "Failed to upload image" });
+    console.error("Upload handler error", err);
+    return jsonResponse(500, { error: err?.message || "Failed to upload image" });
   }
 };
