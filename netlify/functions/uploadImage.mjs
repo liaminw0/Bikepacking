@@ -1,4 +1,5 @@
 import { getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
+import sharp from "sharp";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB guardrail
 
@@ -19,12 +20,12 @@ const buildPublicUrl = (cfg, fileName) => {
   return `${base}${folder}/${encodeURIComponent(fileName)}`;
 };
 
-const sanitizeName = (name = "") => {
+const sanitizeNameToWebp = (name = "") => {
   const parts = name.split(".");
-  const ext = parts.length > 1 ? `.${parts.pop()}` : "";
+  parts.pop(); // drop original extension
   const base = parts.join(".") || "image";
   const safeBase = base.replace(/[^a-z0-9-_]/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-  return `${safeBase || "image"}${ext || ".png"}`;
+  return `${safeBase || "image"}.webp`;
 };
 
 export const handler = async (event) => {
@@ -60,17 +61,19 @@ export const handler = async (event) => {
     return jsonResponse(400, { error: "Image too large (max 10MB)" });
   }
 
-  const fileName = sanitizeName(name);
+  const fileName = sanitizeNameToWebp(name);
   const targetUrl = buildTargetUrl(cfg, fileName);
 
   try {
+    const webpBuffer = await sharp(buffer).rotate().webp({ quality: 82 }).toBuffer();
+
     const res = await fetch(targetUrl, {
       method: "PUT",
       headers: {
         ...basicAuthHeaders(cfg),
-        "Content-Type": contentType?.startsWith("image/") ? contentType : "application/octet-stream",
+        "Content-Type": "image/webp",
       },
-      body: buffer,
+      body: webpBuffer,
     });
     const body = await res.text();
     if (!res.ok) {
