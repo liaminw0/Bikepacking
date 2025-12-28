@@ -392,6 +392,40 @@ button.block { width: 100%; }
   cursor: pointer;
 }
 
+.photo-picker {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.photo-picker__preview {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--border);
+}
+.photo-picker__preview img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+.photo-picker__meta {
+  padding: 0.35rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.photo-picker__preview button {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-color: transparent;
+}
+
 .toast {
   position: fixed;
   bottom: 1rem;

@@ -99,10 +99,15 @@
         Slug (optional)
         <input type="text" id="slugInput" placeholder="auto from title">
       </label>
-        <label id="imageUrlField" class="hidden">
-          Image URL
-          <input type="text" id="photoImageInput" placeholder="https://...">
-        </label>
+        <div id="photoPicker" class="photo-picker hidden">
+          <input type="hidden" id="photoImageInput">
+          <div class="photo-picker__preview hidden" id="photoImagePreviewWrap">
+            <img id="photoImagePreview" alt="Selected image">
+            <div class="photo-picker__meta" id="photoImagePreviewName"></div>
+            <button type="button" class="ghost small" id="clearPhotoImageBtn" aria-label="Remove selected image">✕</button>
+          </div>
+          <button type="button" id="photoImageSelectBtn" class="ghost block">Select or upload image</button>
+        </div>
         <label id="captionField" class="hidden">
           Caption
           <textarea id="photoCaptionInput" rows="3" placeholder="Short caption for the photo"></textarea>

@@ -37,7 +37,12 @@ const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
 const photoImageInput = document.getElementById("photoImageInput");
 const photoCaptionInput = document.getElementById("photoCaptionInput");
-const imageUrlField = document.getElementById("imageUrlField");
+const photoImagePreview = document.getElementById("photoImagePreview");
+const photoImagePreviewName = document.getElementById("photoImagePreviewName");
+const photoImagePreviewWrap = document.getElementById("photoImagePreviewWrap");
+const photoImageSelectBtn = document.getElementById("photoImageSelectBtn");
+const clearPhotoImageBtn = document.getElementById("clearPhotoImageBtn");
+const photoPicker = document.getElementById("photoPicker");
 const captionField = document.getElementById("captionField");
 const bodyBlock = document.getElementById("bodyBlock");
 const allUploadsGallery = document.getElementById("allUploadsGallery");
@@ -63,6 +68,7 @@ let editorInstanceHeight = 560;
 let mediaItems = [];
 let currentPreviewUrl = null;
 let currentPreviewName = "image";
+let photoSelectActive = false;
 
 const isPhotoSection = (sectionVal) => {
   const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
@@ -160,7 +166,7 @@ function toggleFieldVisibility(sectionVal) {
     if (el.tagName === "BUTTON") el.classList.toggle("hidden", isPhoto);
     else el.classList.toggle("hidden", isPhoto);
   });
-  [imageUrlField, captionField].forEach((el) => el?.classList.toggle("hidden", !isPhoto));
+  [photoPicker, captionField].forEach((el) => el?.classList.toggle("hidden", !isPhoto));
 }
 
 function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
@@ -229,6 +235,13 @@ async function loadMediaGallery() {
 }
 
 function insertImage(url, name = "image") {
+  if (photoSelectActive) {
+    setPhotoImage(url, name);
+    photoSelectActive = false;
+    toggleMediaModal(false);
+    showToast("Image selected for photo");
+    return;
+  }
   if (!editor) return;
   const alt = (name || "image").replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
   const snippet = `![${alt}](${url})`;
@@ -291,6 +304,20 @@ function clearUploadSelection() {
   currentPreviewName = "image";
   if (imageInput) imageInput.value = "";
   toggleUploadProgress(false);
+}
+
+function setPhotoImage(url, name = "image") {
+  if (photoImageInput) photoImageInput.value = url;
+  if (photoImagePreview) photoImagePreview.src = url;
+  if (photoImagePreviewName) photoImagePreviewName.textContent = name || url;
+  if (photoImagePreviewWrap) photoImagePreviewWrap.classList.remove("hidden");
+}
+
+function clearPhotoImage() {
+  if (photoImageInput) photoImageInput.value = "";
+  if (photoImagePreview) photoImagePreview.removeAttribute("src");
+  if (photoImagePreviewName) photoImagePreviewName.textContent = "";
+  if (photoImagePreviewWrap) photoImagePreviewWrap.classList.add("hidden");
 }
 
 function handleLocalFileSelection() {
@@ -552,6 +579,8 @@ async function openPost(path) {
     const photoMode = isPhotoSection(section);
     if (photoImageInput) photoImageInput.value = photoMode ? fm.image || "" : "";
     if (photoCaptionInput) photoCaptionInput.value = photoMode ? fm.caption || "" : "";
+    if (photoMode && fm.image) setPhotoImage(fm.image, fm.image);
+    else clearPhotoImage();
     toggleFieldVisibility(section);
     if (!photoMode) editor.setMarkdown(body || "");
     else editor.setMarkdown(body || "");
@@ -576,6 +605,7 @@ function newPost() {
   editor.setMarkdown("");
   photoImageInput && (photoImageInput.value = "");
   photoCaptionInput && (photoCaptionInput.value = "");
+  clearPhotoImage();
   toggleFieldVisibility(sectionInput?.value || selectedSection);
   if (sectionInput && selectedSection) {
     sectionInput.value = selectedSection;
@@ -839,6 +869,20 @@ async function init() {
       e.preventDefault();
       e.stopPropagation();
       if (currentPreviewUrl) openImagePreview(currentPreviewUrl, currentPreviewName);
+    });
+  }
+  if (photoImageSelectBtn) {
+    photoImageSelectBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      photoSelectActive = true;
+      toggleMediaModal(true);
+    });
+  }
+  if (clearPhotoImageBtn) {
+    clearPhotoImageBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearPhotoImage();
     });
   }
   if (closeImagePreviewBtn) closeImagePreviewBtn.addEventListener("click", closeImagePreview);
