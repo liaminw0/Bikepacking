@@ -1,6 +1,8 @@
+import sharp from "sharp";
 import { getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB guardrail
+const WEBP_QUALITY = 82;
 
 const log = (stage, detail = "") => {
   console.error(`[uploadImage] ${stage}${detail ? `: ${detail}` : ""}`);
@@ -23,12 +25,22 @@ const buildPublicUrl = (cfg, fileName) => {
   return `${base}${folder}/${encodeURIComponent(fileName)}`;
 };
 
-const sanitizeName = (name = "") => {
+const sanitizeName = (name = "", extOverride = "") => {
   const parts = name.split(".");
-  const ext = parts.length > 1 ? `.${parts.pop()}` : "";
+  const ext = extOverride || (parts.length > 1 ? `.${parts.pop()}` : "");
   const base = parts.join(".") || "image";
   const safeBase = base.replace(/[^a-z0-9-_]/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
   return `${safeBase || "image"}${ext || ".png"}`;
+};
+
+const convertToWebp = async (buffer) => {
+  try {
+    const webpBuffer = await sharp(buffer, { failOn: "none" }).rotate().webp({ quality: WEBP_QUALITY }).toBuffer();
+    return webpBuffer;
+  } catch (err) {
+    log("convert error", err?.message);
+    throw new Error("Invalid or unsupported image");
+  }
 };
 
 export const handler = async (event) => {
@@ -68,7 +80,22 @@ export const handler = async (event) => {
   }
   log("buffer size", `${buffer.length} bytes`);
 
-  const fileName = sanitizeName(name);
+  if (!contentType?.startsWith("image/")) {
+    return jsonResponse(400, { error: "Images only" });
+  }
+
+  let processedBuffer;
+  try {
+    processedBuffer = await convertToWebp(buffer);
+    log("processed size", `${processedBuffer.length} bytes`);
+  } catch (err) {
+    return jsonResponse(400, { error: err.message || "Unable to process image" });
+  }
+  if (processedBuffer.length > MAX_IMAGE_SIZE) {
+    return jsonResponse(400, { error: "Image too large after processing" });
+  }
+
+  const fileName = sanitizeName(name, ".webp");
   const targetUrl = buildTargetUrl(cfg, fileName);
   log("target", targetUrl);
 
@@ -77,9 +104,9 @@ export const handler = async (event) => {
       method: "PUT",
       headers: {
         ...basicAuthHeaders(cfg),
-        "Content-Type": contentType?.startsWith("image/") ? contentType : "application/octet-stream",
+        "Content-Type": "image/webp",
       },
-      body: buffer,
+      body: processedBuffer,
     });
     const body = await res.text();
     if (!res.ok) {
