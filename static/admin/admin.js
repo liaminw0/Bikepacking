@@ -29,6 +29,9 @@ const toastEl = document.getElementById("toast");
 const mediaBtn = document.getElementById("mediaBtn");
 const mediaModal = document.getElementById("mediaModal");
 const closeMediaBtn = document.getElementById("closeMediaBtn");
+const imagePreviewModal = document.getElementById("imagePreviewModal");
+const closeImagePreviewBtn = document.getElementById("closeImagePreviewBtn");
+const imagePreviewImg = document.getElementById("imagePreviewImg");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
@@ -104,6 +107,19 @@ function toggleMediaModal(open) {
   if (open) loadMediaGallery().catch(() => {});
 }
 
+function openImagePreview(url, name = "image") {
+  if (!imagePreviewModal || !imagePreviewImg) return;
+  imagePreviewImg.src = url;
+  imagePreviewImg.alt = name;
+  imagePreviewModal.classList.remove("hidden");
+}
+
+function closeImagePreview() {
+  if (!imagePreviewModal || !imagePreviewImg) return;
+  imagePreviewModal.classList.add("hidden");
+  imagePreviewImg.removeAttribute("src");
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -132,6 +148,15 @@ function renderMediaGallery(items = []) {
     img.src = item.url;
     img.alt = item.name || "Image";
     img.className = "media-thumb";
+    const viewBtn = document.createElement("button");
+    viewBtn.type = "button";
+    viewBtn.className = "media-view-btn";
+    viewBtn.textContent = "View";
+    viewBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openImagePreview(item.url, item.name);
+    });
     const meta = document.createElement("div");
     meta.className = "media-meta";
     const label = document.createElement("span");
@@ -141,6 +166,7 @@ function renderMediaGallery(items = []) {
     meta.appendChild(label);
     meta.appendChild(size);
     btn.appendChild(img);
+    btn.appendChild(viewBtn);
     btn.appendChild(meta);
     btn.addEventListener("click", () => insertImage(item.url, item.name));
     mediaGallery.appendChild(btn);
@@ -691,6 +717,7 @@ async function init() {
       clearUploadSelection();
     });
   }
+  if (closeImagePreviewBtn) closeImagePreviewBtn.addEventListener("click", closeImagePreview);
   if (imageInput) {
     imageInput.addEventListener("change", handleLocalFileSelection);
   }
@@ -704,6 +731,11 @@ async function init() {
       if (e.dataTransfer?.files?.length) {
         setInputFiles(e.dataTransfer.files);
       }
+    });
+  }
+  if (imagePreviewModal) {
+    imagePreviewModal.addEventListener("click", (e) => {
+      if (e.target === imagePreviewModal) closeImagePreview();
     });
   }
   if (mediaModal) {
