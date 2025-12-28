@@ -14,7 +14,7 @@ const buildTargetUrl = (cfg, fileName = "") => {
 };
 
 const buildPublicUrl = (cfg, fileName) => {
-  const base = cfg.publicBaseUrl.replace(/\/+$/, "");
+  const base = (cfg.publicBaseUrl || cfg.baseUrl || "").replace(/\/+$/, "");
   const folder = cfg.folder ? `/${cfg.folder.replace(/^\/+|\/+$/g, "")}` : "";
   return `${base}${folder}/${encodeURIComponent(fileName)}`;
 };
@@ -82,6 +82,6 @@ export const handler = async (event) => {
     return jsonResponse(200, { ok: true, url: publicUrl, name: fileName });
   } catch (err) {
     console.error(err);
-    return jsonResponse(500, { error: "Failed to upload image" });
+    return jsonResponse(500, { error: err?.message || "Failed to upload image" });
   }
 };
