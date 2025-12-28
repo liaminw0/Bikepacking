@@ -14,26 +14,17 @@ const buildTargetUrl = (cfg, fileName = "") => {
 };
 
 const buildPublicUrl = (cfg, fileName) => {
-  const base = (cfg.publicBaseUrl || cfg.baseUrl || "").replace(/\/+$/, "");
-  if (!base) throw new Error("Missing public URL base");
+  const base = cfg.publicBaseUrl.replace(/\/+$/, "");
   const folder = cfg.folder ? `/${cfg.folder.replace(/^\/+|\/+$/g, "")}` : "";
   return `${base}${folder}/${encodeURIComponent(fileName)}`;
 };
 
-const sanitizeNameToWebp = (name = "") => {
+const sanitizeName = (name = "") => {
   const parts = name.split(".");
-  parts.pop(); // drop original extension
+  const ext = parts.length > 1 ? `.${parts.pop()}` : "";
   const base = parts.join(".") || "image";
   const safeBase = base.replace(/[^a-z0-9-_]/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-  return `${safeBase || "image"}.webp`;
-};
-
-const sanitizeNamePreserveExt = (name = "") => {
-  const parts = name.split(".");
-  const ext = parts.length > 1 ? `.${parts.pop()}` : ".png";
-  const base = parts.join(".") || "image";
-  const safeBase = base.replace(/[^a-z0-9-_]/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-  return `${safeBase || "image"}${ext}`;
+  return `${safeBase || "image"}${ext || ".png"}`;
 };
 
 export const handler = async (event) => {
@@ -69,49 +60,28 @@ export const handler = async (event) => {
     return jsonResponse(400, { error: "Image too large (max 10MB)" });
   }
 
-  let fileName = sanitizeNameToWebp(name);
+  const fileName = sanitizeName(name);
+  const targetUrl = buildTargetUrl(cfg, fileName);
 
   try {
-    let uploadBuffer = buffer;
-    let uploadType = "application/octet-stream";
-
-    try {
-      const sharp = (await import("sharp")).default;
-      uploadBuffer = await sharp(buffer).rotate().webp({ quality: 82 }).toBuffer();
-      uploadType = "image/webp";
-      fileName = sanitizeNameToWebp(name);
-    } catch (err) {
-      console.error("Sharp conversion failed, uploading original", err);
-      uploadBuffer = buffer;
-      uploadType = contentType?.startsWith("image/") ? contentType : "application/octet-stream";
-      fileName = sanitizeNamePreserveExt(name);
-    }
-
-    const putUrl = buildTargetUrl(cfg, fileName);
-    const res = await fetch(putUrl, {
+    const res = await fetch(targetUrl, {
       method: "PUT",
       headers: {
         ...basicAuthHeaders(cfg),
-        "Content-Type": uploadType,
+        "Content-Type": contentType?.startsWith("image/") ? contentType : "application/octet-stream",
       },
-      body: uploadBuffer,
+      body: buffer,
     });
     const body = await res.text();
     if (!res.ok) {
       console.error("Nextcloud upload failed", res.status, body);
       const status = res.status === 401 ? 502 : 500;
-      return jsonResponse(status, { error: `Upload failed (${res.status})` });
+      return jsonResponse(status, { error: "Failed to upload image" });
     }
-    let publicUrl;
-    try {
-      publicUrl = buildPublicUrl(cfg, fileName);
-    } catch (e) {
-      console.error("Public URL build failed", e);
-      return jsonResponse(500, { error: "Upload ok but public URL missing" });
-    }
+    const publicUrl = buildPublicUrl(cfg, fileName);
     return jsonResponse(200, { ok: true, url: publicUrl, name: fileName });
   } catch (err) {
-    console.error("Upload handler error", err);
-    return jsonResponse(500, { error: err?.message || "Failed to upload image" });
+    console.error(err);
+    return jsonResponse(500, { error: "Failed to upload image" });
   }
 };
