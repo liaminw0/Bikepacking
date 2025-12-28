@@ -99,14 +99,24 @@
         Slug (optional)
         <input type="text" id="slugInput" placeholder="auto from title">
       </label>
-        <div class="shortcode-bar">
-          <span>Body</span>
-          <div class="shortcode-actions">
-            <button type="button" id="mediaBtn" class="ghost small">Images</button>
-            <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+        <label id="imageUrlField" class="hidden">
+          Image URL
+          <input type="text" id="photoImageInput" placeholder="https://...">
+        </label>
+        <label id="captionField" class="hidden">
+          Caption
+          <textarea id="photoCaptionInput" rows="3" placeholder="Short caption for the photo"></textarea>
+        </label>
+        <div id="bodyBlock">
+          <div class="shortcode-bar">
+            <span>Body</span>
+            <div class="shortcode-actions">
+              <button type="button" id="mediaBtn" class="ghost small">Images</button>
+              <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+            </div>
           </div>
+          <div id="editor"></div>
         </div>
-        <div id="editor"></div>
       </form>
     </section>
   </main>

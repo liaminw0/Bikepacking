@@ -35,6 +35,11 @@ const imagePreviewImg = document.getElementById("imagePreviewImg");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
+const photoImageInput = document.getElementById("photoImageInput");
+const photoCaptionInput = document.getElementById("photoCaptionInput");
+const imageUrlField = document.getElementById("imageUrlField");
+const captionField = document.getElementById("captionField");
+const bodyBlock = document.getElementById("bodyBlock");
 const allUploadsGallery = document.getElementById("allUploadsGallery");
 const bulkImageInput = document.getElementById("bulkImageInput");
 const bulkUploadBtn = document.getElementById("bulkUploadBtn");
@@ -58,6 +63,11 @@ let editorInstanceHeight = 560;
 let mediaItems = [];
 let currentPreviewUrl = null;
 let currentPreviewName = "image";
+
+const isPhotoSection = (sectionVal) => {
+  const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
+  return value.includes("content/photos");
+};
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -139,6 +149,18 @@ function fileToBase64(file) {
     reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
+}
+
+function toggleFieldVisibility(sectionVal) {
+  const isPhoto = isPhotoSection(sectionVal);
+  const tagsField = tagsInput?.closest("label");
+  const slugField = slugInput?.closest("label");
+  [tagsField, slugField, bodyBlock, shortcodeBtn, mediaBtn].forEach((el) => {
+    if (!el) return;
+    if (el.tagName === "BUTTON") el.classList.toggle("hidden", isPhoto);
+    else el.classList.toggle("hidden", isPhoto);
+  });
+  [imageUrlField, captionField].forEach((el) => el?.classList.toggle("hidden", !isPhoto));
 }
 
 function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
@@ -453,20 +475,21 @@ function parseFrontMatter(markdown) {
   return { fm, body: match[2] };
 }
 
-function buildFrontMatter(data) {
-  const safeTitle = data.title.replace(/"/g, '\\"');
-  const tags = (data.tags || [])
-    .map((t) => `"${t.trim().replace(/"/g, "")}"`)
-    .filter(Boolean)
-    .join(", ");
-  const lines = [
-    "---",
-    `title: "${safeTitle}"`,
-    `date: ${data.date}`,
-    `draft: ${data.draft ? "true" : "false"}`,
-    `tags: [${tags}]`,
-  ];
-  if (data.slug) lines.push(`slug: ${data.slug}`);
+function buildFrontMatter(data, isPhoto = false) {
+  const escapeVal = (val = "") => val.replace(/"/g, '\\"');
+  const safeTitle = escapeVal(data.title || "");
+  const lines = ["---", `title: "${safeTitle}"`, `date: ${data.date}`, `draft: ${data.draft ? "true" : "false"}`];
+  if (isPhoto) {
+    if (data.image) lines.push(`image: "${escapeVal(data.image)}"`);
+    if (data.caption) lines.push(`caption: "${escapeVal(data.caption)}"`);
+  } else {
+    const tags = (data.tags || [])
+      .map((t) => `"${t.trim().replace(/"/g, "")}"`)
+      .filter(Boolean)
+      .join(", ");
+    lines.push(`tags: [${tags}]`);
+    if (data.slug) lines.push(`slug: ${data.slug}`);
+  }
   lines.push("---", "");
   return lines.join("\n");
 }
@@ -526,7 +549,12 @@ async function openPost(path) {
     slugInput.value = fm.slug || "";
     const section = (data.path || "").split("/").slice(0, -1).join("/");
     if (sectionInput && section) sectionInput.value = section;
-    editor.setMarkdown(body || "");
+    const photoMode = isPhotoSection(section);
+    if (photoImageInput) photoImageInput.value = photoMode ? fm.image || "" : "";
+    if (photoCaptionInput) photoCaptionInput.value = photoMode ? fm.caption || "" : "";
+    toggleFieldVisibility(section);
+    if (!photoMode) editor.setMarkdown(body || "");
+    else editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
   } catch (err) {
@@ -546,6 +574,9 @@ function newPost() {
   tagsInput.value = "";
   slugInput.value = "";
   editor.setMarkdown("");
+  photoImageInput && (photoImageInput.value = "");
+  photoCaptionInput && (photoCaptionInput.value = "");
+  toggleFieldVisibility(sectionInput?.value || selectedSection);
   if (sectionInput && selectedSection) {
     sectionInput.value = selectedSection;
   }
@@ -558,7 +589,9 @@ async function savePost() {
   if (!title) return showToast("Title required", true);
   const slug = slugInput.value.trim() || slugify(title);
   const date = new Date(dateInput.value || new Date());
-  const body = editor.getMarkdown();
+  const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
+  const photoMode = isPhotoSection(chosenDir);
+  const body = photoMode ? "" : editor.getMarkdown();
   const tags = tagsInput.value
     .split(",")
     .map((t) => t.trim())
@@ -569,10 +602,11 @@ async function savePost() {
     draft: draftInput.checked,
     tags,
     slug,
-  });
+    image: photoImageInput?.value.trim(),
+    caption: photoCaptionInput?.value.trim(),
+  }, photoMode);
   const content = `${fm}${body}`;
   const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
-  const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
   const path = currentPost?.path || `${chosenDir}/${filename}`;
   const payload = {
     path,
@@ -836,6 +870,7 @@ async function init() {
 
   loadShortcodes();
   setSections(CONTENT_DIRS);
+  toggleFieldVisibility(selectedSection || CONTENT_DIRS[0]);
   setEditorHeight();
   window.addEventListener("resize", setEditorHeight);
 
@@ -857,6 +892,7 @@ async function init() {
 
   if (sectionInput) {
     sectionInput.addEventListener("change", () => {
+      toggleFieldVisibility(sectionInput.value);
       loadPosts().catch(() => {});
     });
   }
