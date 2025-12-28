@@ -573,7 +573,7 @@ async function openPost(path) {
     dateInput.value = fm.date ? formatDateInput(new Date(fm.date)) : formatDateInput(new Date());
     draftInput.checked = !!fm.draft;
     tagsInput.value = Array.isArray(fm.tags) ? fm.tags.join(", ") : "";
-    slugInput.value = fm.slug || "";
+    if (slugInput) slugInput.value = fm.slug || "";
     const section = (data.path || "").split("/").slice(0, -1).join("/");
     if (sectionInput && section) sectionInput.value = section;
     const photoMode = isPhotoSection(section);
@@ -601,7 +601,7 @@ function newPost() {
   dateInput.value = formatDateInput(new Date());
   draftInput.checked = false;
   tagsInput.value = "";
-  slugInput.value = "";
+  if (slugInput) slugInput.value = "";
   editor.setMarkdown("");
   photoImageInput && (photoImageInput.value = "");
   photoCaptionInput && (photoCaptionInput.value = "");
@@ -617,7 +617,7 @@ function newPost() {
 async function savePost() {
   const title = titleInput.value.trim();
   if (!title) return showToast("Title required", true);
-  const slug = slugInput.value.trim() || slugify(title);
+  const slug = (slugInput?.value || "").trim() || slugify(title);
   const date = new Date(dateInput.value || new Date());
   const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
   const photoMode = isPhotoSection(chosenDir);
