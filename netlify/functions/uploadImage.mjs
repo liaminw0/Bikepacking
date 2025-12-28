@@ -85,12 +85,16 @@ export const handler = async (event) => {
     if (!res.ok) {
       console.error("Nextcloud upload failed", res.status, body);
       const status = res.status === 401 ? 502 : 500;
-      return jsonResponse(status, { error: "Failed to upload image" });
+      const snippet = typeof body === "string" ? body.slice(0, 200) : "";
+      return jsonResponse(status, {
+        error: `Nextcloud upload failed (${res.status})`,
+        detail: snippet,
+      });
     }
     const publicUrl = buildPublicUrl(cfg, fileName);
     return jsonResponse(200, { ok: true, url: publicUrl, name: fileName });
   } catch (err) {
-    console.error(err);
+    console.error("Upload handler error", err);
     return jsonResponse(500, { error: err?.message || "Failed to upload image" });
   }
 };
