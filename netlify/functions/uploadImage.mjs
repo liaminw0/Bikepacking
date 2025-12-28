@@ -2,6 +2,10 @@ import { getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB guardrail
 
+const log = (stage, detail = "") => {
+  console.error(`[uploadImage] ${stage}${detail ? `: ${detail}` : ""}`);
+};
+
 const basicAuthHeaders = (cfg) => ({
   Authorization: `Basic ${Buffer.from(`${cfg.username}:${cfg.password}`).toString("base64")}`,
 });
@@ -31,6 +35,7 @@ export const handler = async (event) => {
   const auth = verifyRequest(event);
   if (!auth.ok) return auth.response;
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method not allowed" });
+  log("start");
 
   let cfg;
   try {
@@ -40,6 +45,7 @@ export const handler = async (event) => {
     return jsonResponse(500, { error: "Nextcloud not configured" });
   }
   if (!cfg) return jsonResponse(500, { error: "Nextcloud not configured" });
+  log("config ok", `base=${cfg.baseUrl}, public=${cfg.publicBaseUrl || cfg.baseUrl}`);
 
   let payload;
   try {
@@ -49,6 +55,7 @@ export const handler = async (event) => {
   }
   const { name, data, contentType } = payload || {};
   if (!data) return jsonResponse(400, { error: "Image data required" });
+  log("payload", `name=${name || "unnamed"}, type=${contentType || "unknown"}`);
 
   let buffer;
   try {
@@ -59,9 +66,11 @@ export const handler = async (event) => {
   if (buffer.length > MAX_IMAGE_SIZE) {
     return jsonResponse(400, { error: "Image too large (max 10MB)" });
   }
+  log("buffer size", `${buffer.length} bytes`);
 
   const fileName = sanitizeName(name);
   const targetUrl = buildTargetUrl(cfg, fileName);
+  log("target", targetUrl);
 
   try {
     const res = await fetch(targetUrl, {
