@@ -32,6 +32,7 @@ const closeMediaBtn = document.getElementById("closeMediaBtn");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
+const fileDrop = document.getElementById("fileDrop");
 const uploadProgress = document.getElementById("uploadProgress");
 const uploadProgressBar = document.getElementById("uploadProgressBar");
 const uploadProgressLabel = document.getElementById("uploadProgressLabel");
@@ -223,6 +224,23 @@ function handleLocalFileSelection() {
   toggleUploadProgress(false);
   const previewUrl = URL.createObjectURL(file);
   showUploadPreview(previewUrl, file.name);
+}
+
+function setInputFiles(files) {
+  if (!files?.length || !imageInput) {
+    clearUploadSelection();
+    return;
+  }
+  const file = files[0];
+  if (!file.type.startsWith("image/")) {
+    showToast("Images only", true);
+    clearUploadSelection();
+    return;
+  }
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  imageInput.files = dt.files;
+  handleLocalFileSelection();
 }
 
 async function uploadWithProgress(payload, onProgress) {
@@ -674,6 +692,18 @@ async function init() {
   }
   if (imageInput) {
     imageInput.addEventListener("change", handleLocalFileSelection);
+  }
+  if (fileDrop) {
+    fileDrop.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+    fileDrop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer?.files?.length) {
+        setInputFiles(e.dataTransfer.files);
+      }
+    });
   }
   if (mediaModal) {
     mediaModal.addEventListener("click", (e) => {
