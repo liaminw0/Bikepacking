@@ -112,13 +112,21 @@
         <button id="closeMediaBtn" class="ghost small">✕</button>
       </div>
       <div class="media-upload">
-        <label class="file-drop">
+        <label class="file-drop" id="fileDrop">
           <input type="file" id="imageInput" accept="image/*">
           <div>
             <strong>Select or drop an image</strong>
             <p class="hint">Images stay in Nextcloud. Credentials are kept server-side.</p>
           </div>
+          <div class="upload-preview hidden" id="uploadPreview">
+            <img id="uploadPreviewImg" alt="Uploaded image preview">
+            <button type="button" class="ghost small" id="clearUploadBtn" aria-label="Remove selected image">✕</button>
+          </div>
         </label>
+        <div class="upload-progress hidden" id="uploadProgress">
+          <div class="upload-progress__bar" id="uploadProgressBar"></div>
+          <span class="upload-progress__label" id="uploadProgressLabel">0%</span>
+        </div>
         <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
         <p class="hint" id="uploadHint">Max 10MB. Images only.</p>
       </div>

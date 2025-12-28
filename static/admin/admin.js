@@ -32,6 +32,12 @@ const closeMediaBtn = document.getElementById("closeMediaBtn");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
+const uploadProgress = document.getElementById("uploadProgress");
+const uploadProgressBar = document.getElementById("uploadProgressBar");
+const uploadProgressLabel = document.getElementById("uploadProgressLabel");
+const uploadPreview = document.getElementById("uploadPreview");
+const uploadPreviewImg = document.getElementById("uploadPreviewImg");
+const clearUploadBtn = document.getElementById("clearUploadBtn");
 
 let editor;
 let currentPost = null; // { path, sha }
@@ -164,6 +170,62 @@ function insertImage(url, name = "image") {
   showToast("Image inserted");
 }
 
+function toggleUploadProgress(show) {
+  if (!uploadProgress) return;
+  uploadProgress.classList.toggle("hidden", !show);
+  if (!show) {
+    uploadProgressBar?.style.setProperty("--upload-progress", "0%");
+    if (uploadProgressLabel) uploadProgressLabel.textContent = "0%";
+  }
+}
+
+function setUploadProgress(percent) {
+  if (!uploadProgressBar || !uploadProgressLabel) return;
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  uploadProgressBar.style.setProperty("--upload-progress", `${clamped}%`);
+  uploadProgressLabel.textContent = `${clamped}%`;
+}
+
+function showUploadPreview(url, name = "image") {
+  if (!uploadPreview || !uploadPreviewImg) return;
+  uploadPreviewImg.src = url;
+  uploadPreviewImg.alt = name;
+  uploadPreview.classList.remove("hidden");
+}
+
+function clearUploadSelection() {
+  if (uploadPreview) uploadPreview.classList.add("hidden");
+  if (uploadPreviewImg) uploadPreviewImg.removeAttribute("src");
+  if (imageInput) imageInput.value = "";
+  toggleUploadProgress(false);
+}
+
+async function uploadWithProgress(payload, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/.netlify/functions/uploadImage");
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (evt) => {
+      if (!evt.lengthComputable || typeof onProgress !== "function") return;
+      const percent = (evt.loaded / evt.total) * 100;
+      onProgress(percent);
+    };
+    xhr.onload = () => {
+      const status = xhr.status;
+      let data;
+      try { data = JSON.parse(xhr.responseText || "{}"); } catch { data = { error: xhr.responseText }; }
+      if (status === 401) return reject(new Error("unauthorized"));
+      if (status < 200 || status >= 300) {
+        return reject(new Error(data?.error || xhr.statusText || "Upload failed"));
+      }
+      resolve(data);
+    };
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
 async function uploadImage() {
   if (!imageInput || !imageInput.files || !imageInput.files.length) {
     showToast("Choose an image first", true);
@@ -175,6 +237,8 @@ async function uploadImage() {
     return;
   }
   try {
+    toggleUploadProgress(true);
+    setUploadProgress(5);
     if (uploadImageBtn) uploadImageBtn.disabled = true;
     const base64 = await fileToBase64(file);
     const payload = {
@@ -182,14 +246,13 @@ async function uploadImage() {
       contentType: file.type,
       data: base64,
     };
-    const res = await api("uploadImage", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const res = await uploadWithProgress(payload, (p) => setUploadProgress(Math.max(10, p)));
+    setUploadProgress(100);
     if (res?.url) {
+      showUploadPreview(res.url, res.name || file.name);
+      if (imageInput) imageInput.value = "";
       insertImage(res.url, res.name || file.name);
       await loadMediaGallery();
-      imageInput.value = "";
       showToast("Image uploaded");
     }
   } catch (err) {
@@ -200,6 +263,7 @@ async function uploadImage() {
     showToast(err.message, true);
   } finally {
     if (uploadImageBtn) uploadImageBtn.disabled = false;
+    setTimeout(() => toggleUploadProgress(false), 600);
   }
 }
 
@@ -576,6 +640,13 @@ async function init() {
   if (mediaBtn) mediaBtn.addEventListener("click", () => toggleMediaModal(true));
   if (closeMediaBtn) closeMediaBtn.addEventListener("click", () => toggleMediaModal(false));
   if (uploadImageBtn) uploadImageBtn.addEventListener("click", uploadImage);
+  if (clearUploadBtn) {
+    clearUploadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearUploadSelection();
+    });
+  }
   if (mediaModal) {
     mediaModal.addEventListener("click", (e) => {
       if (e.target === mediaModal) toggleMediaModal(false);

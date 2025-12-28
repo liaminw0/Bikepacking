@@ -225,6 +225,63 @@ button.block { width: 100%; }
   opacity: 0;
   cursor: pointer;
 }
+.upload-preview {
+  position: absolute;
+  inset: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+.upload-preview img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+  background: var(--border);
+}
+.upload-preview button {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-color: transparent;
+  padding: 0.3rem 0.55rem;
+}
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+}
+.upload-progress__bar {
+  --upload-progress: 0%;
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.upload-progress__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--upload-progress);
+  background: linear-gradient(90deg, var(--link), #1f7aff);
+  border-radius: inherit;
+  transition: width 120ms ease-out;
+}
+.upload-progress__label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
 .media-gallery {
   border: 1px solid var(--border);
   border-radius: 10px;
