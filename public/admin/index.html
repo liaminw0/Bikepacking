@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hugo Mobile Admin</title>
-  <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+  <link rel="stylesheet" href="toastui-editor.min.css">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">Hugo Admin</div>
-    <button id="logoutBtn" class="ghost small" aria-label="Logout">Logout</button>
+    <button id="logoutBtn" class="ghost small hidden" aria-label="Logout">Logout</button>
   </header>
 
   <main class="page">
@@ -28,13 +28,42 @@
 
     <section id="listView" class="card hidden">
       <div class="list-header">
-        <h1>Posts</h1>
+        <div class="list-title">
+          <h1>Posts</h1>
+          <label class="inline">
+            <span>Section</span>
+            <select id="sectionFilter"></select>
+          </label>
+        </div>
         <div class="actions">
           <button id="refreshBtn" class="ghost small">Refresh</button>
           <button id="newPostBtn" class="primary small">New post</button>
         </div>
       </div>
       <div id="postsContainer" class="list"></div>
+
+      <div class="uploads-panel">
+        <div class="list-header">
+          <div class="list-title">
+            <h2>All uploads</h2>
+            <span class="hint">From Nextcloud</span>
+          </div>
+          <div class="actions">
+            <label class="ghost small upload-multi-btn">
+              <input type="file" id="bulkImageInput" accept="image/*" multiple>
+              Select images
+            </label>
+            <button type="button" id="bulkUploadBtn" class="primary small">Upload selected</button>
+          </div>
+        </div>
+        <div class="upload-progress hidden" id="bulkUploadProgress">
+          <div class="upload-progress__bar" id="bulkUploadProgressBar"></div>
+          <span class="upload-progress__label" id="bulkUploadProgressLabel">0%</span>
+        </div>
+        <div class="media-gallery" id="allUploadsGallery">
+          <p class="hint">Loading images...</p>
+        </div>
+      </div>
     </section>
 
     <section id="editorView" class="card hidden">
@@ -54,23 +83,39 @@
           Date
           <input type="datetime-local" id="dateInput" required>
         </label>
+        <input type="hidden" id="sectionInput">
         <label class="row">
           <span>Draft</span>
           <input type="checkbox" id="draftInput">
         </label>
-        <label>
-          Tags (comma separated)
-          <input type="text" id="tagsInput" placeholder="tag1, tag2">
-        </label>
-        <label>
-          Slug (optional)
-          <input type="text" id="slugInput" placeholder="auto from title">
-        </label>
-        <div class="shortcode-bar">
-          <span>Body</span>
-          <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+      <label>
+        Tags (comma separated)
+        <input type="text" id="tagsInput" placeholder="tag1, tag2">
+      </label>
+      <input type="hidden" id="slugInput">
+        <div id="photoPicker" class="photo-picker hidden">
+          <input type="hidden" id="photoImageInput">
+          <div class="photo-picker__preview hidden" id="photoImagePreviewWrap">
+            <img id="photoImagePreview" alt="Selected image">
+            <div class="photo-picker__meta" id="photoImagePreviewName"></div>
+            <button type="button" class="ghost small" id="clearPhotoImageBtn" aria-label="Remove selected image">✕</button>
+          </div>
+          <button type="button" id="photoImageSelectBtn" class="ghost block">Select or upload image</button>
         </div>
-        <div id="editor"></div>
+        <label id="captionField" class="hidden">
+          Caption
+          <textarea id="photoCaptionInput" rows="3" placeholder="Short caption for the photo"></textarea>
+        </label>
+        <div id="bodyBlock">
+          <div class="shortcode-bar">
+            <span>Body</span>
+            <div class="shortcode-actions">
+              <button type="button" id="mediaBtn" class="ghost small">Images</button>
+              <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
+            </div>
+          </div>
+          <div id="editor"></div>
+        </div>
       </form>
     </section>
   </main>
@@ -92,9 +137,53 @@
     </div>
   </div>
 
+  <div id="mediaModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content media-modal">
+      <div class="modal-header">
+        <h2>Images</h2>
+        <button id="closeMediaBtn" class="ghost small">✕</button>
+      </div>
+      <div class="media-upload">
+        <label class="file-drop" id="fileDrop">
+          <input type="file" id="imageInput" accept="image/*">
+          <div>
+            <strong>Select or drop an image</strong>
+            <p class="hint">Images stay in Nextcloud. Credentials are kept server-side.</p>
+          </div>
+          <div class="upload-preview hidden" id="uploadPreview">
+            <img id="uploadPreviewImg" alt="Uploaded image preview">
+            <button type="button" class="ghost small" id="clearUploadBtn" aria-label="Remove selected image">✕</button>
+            <button type="button" class="ghost small" id="viewUploadBtn" aria-label="View selected image">View</button>
+          </div>
+        </label>
+        <div class="upload-progress hidden" id="uploadProgress">
+          <div class="upload-progress__bar" id="uploadProgressBar"></div>
+          <span class="upload-progress__label" id="uploadProgressLabel">0%</span>
+        </div>
+        <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
+        <p class="hint" id="uploadHint">Max 10MB. Images only.</p>
+      </div>
+      <div class="media-gallery" id="mediaGallery">
+        <p class="hint">Loading images...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="imagePreviewModal" class="modal modal-center hidden" role="dialog" aria-modal="true">
+    <div class="modal-content image-preview-modal">
+      <div class="modal-header">
+        <h2>Preview</h2>
+        <button id="closeImagePreviewBtn" class="ghost small">✕</button>
+      </div>
+      <div class="image-preview-body">
+        <img id="imagePreviewImg" alt="Selected image preview">
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
-  <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+  <script src="toastui-editor-all.min.js"></script>
   <script type="module" src="admin.js"></script>
 </body>
 </html>

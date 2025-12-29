@@ -3,14 +3,54 @@
 
 {{ .Content }}
 
-{{ range.Data.Pages }}
-<article class="post-snippet">
-  <h3>
-    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-  </h3>
-	<time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
-		{{ .Date.Format "January 2, 2006" }}
-	</time>
-</article>
+{{ if eq .Section "journal" }}
+<div class="journal-layout">
+  <div class="journal-list">
+    {{ range .Pages }}
+    <article class="post-snippet">
+      <h3>
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      </h3>
+      <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+        {{ .Date.Format "January 2, 2006" }}
+      </time>
+    </article>
+    {{ end }}
+  </div>
+  <aside class="journal-tags">
+    <h3>Tags</h3>
+    {{ $journalTags := slice }}
+    {{ range $name, $term := .Site.Taxonomies.tags }}
+      {{ $journalPages := where $term.Pages "Section" "journal" }}
+      {{ if gt (len $journalPages) 0 }}
+        {{ $journalTags = $journalTags | append (dict "name" $name "page" $term.Page "count" (len $journalPages)) }}
+      {{ end }}
+    {{ end }}
+    {{ $journalTags = sort $journalTags "name" }}
+    {{ if gt (len $journalTags) 0 }}
+      <ul class="tag-list">
+        {{ range $journalTags }}
+        <li>
+          <a href="{{ .page.RelPermalink }}">{{ .name }}</a>
+          <span aria-hidden="true">({{ .count }})</span>
+        </li>
+        {{ end }}
+      </ul>
+    {{ else }}
+      <p class="tag-list__empty">No tags yet.</p>
+    {{ end }}
+  </aside>
+</div>
+{{ else }}
+  {{ range.Data.Pages }}
+  <article class="post-snippet">
+    <h3>
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    </h3>
+    <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+      {{ .Date.Format "January 2, 2006" }}
+    </time>
+  </article>
+  {{ end }}
 {{ end }}
 {{ end }}

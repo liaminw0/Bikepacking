@@ -1,3 +1,4 @@
+const CONTENT_DIRS = window.CONTENT_DIRS || [window.CONTENT_DIR || "content/journal", "content/photos"];
 const editorEl = document.getElementById("editor");
 const loginView = document.getElementById("loginView");
 const listView = document.getElementById("listView");
@@ -16,6 +17,8 @@ const dateInput = document.getElementById("dateInput");
 const draftInput = document.getElementById("draftInput");
 const tagsInput = document.getElementById("tagsInput");
 const slugInput = document.getElementById("slugInput");
+const sectionInput = document.getElementById("sectionInput");
+const sectionFilter = document.getElementById("sectionFilter");
 const shortcodeBtn = document.getElementById("shortcodeBtn");
 const shortcodeModal = document.getElementById("shortcodeModal");
 const closeShortcodeBtn = document.getElementById("closeShortcodeBtn");
@@ -23,10 +26,75 @@ const shortcodeSelect = document.getElementById("shortcodeSelect");
 const shortcodeFields = document.getElementById("shortcodeFields");
 const insertShortcodeBtn = document.getElementById("insertShortcodeBtn");
 const toastEl = document.getElementById("toast");
+const mediaBtn = document.getElementById("mediaBtn");
+const mediaModal = document.getElementById("mediaModal");
+const closeMediaBtn = document.getElementById("closeMediaBtn");
+const imagePreviewModal = document.getElementById("imagePreviewModal");
+const closeImagePreviewBtn = document.getElementById("closeImagePreviewBtn");
+const imagePreviewImg = document.getElementById("imagePreviewImg");
+const imageInput = document.getElementById("imageInput");
+const uploadImageBtn = document.getElementById("uploadImageBtn");
+const mediaGallery = document.getElementById("mediaGallery");
+const photoImageInput = document.getElementById("photoImageInput");
+const photoCaptionInput = document.getElementById("photoCaptionInput");
+const photoImagePreview = document.getElementById("photoImagePreview");
+const photoImagePreviewName = document.getElementById("photoImagePreviewName");
+const photoImagePreviewWrap = document.getElementById("photoImagePreviewWrap");
+const photoImageSelectBtn = document.getElementById("photoImageSelectBtn");
+const clearPhotoImageBtn = document.getElementById("clearPhotoImageBtn");
+const photoPicker = document.getElementById("photoPicker");
+const captionField = document.getElementById("captionField");
+const bodyBlock = document.getElementById("bodyBlock");
+const allUploadsGallery = document.getElementById("allUploadsGallery");
+const bulkImageInput = document.getElementById("bulkImageInput");
+const bulkUploadBtn = document.getElementById("bulkUploadBtn");
+const bulkUploadProgress = document.getElementById("bulkUploadProgress");
+const bulkUploadProgressBar = document.getElementById("bulkUploadProgressBar");
+const bulkUploadProgressLabel = document.getElementById("bulkUploadProgressLabel");
+const fileDrop = document.getElementById("fileDrop");
+const uploadProgress = document.getElementById("uploadProgress");
+const uploadProgressBar = document.getElementById("uploadProgressBar");
+const uploadProgressLabel = document.getElementById("uploadProgressLabel");
+const uploadPreview = document.getElementById("uploadPreview");
+const uploadPreviewImg = document.getElementById("uploadPreviewImg");
+const clearUploadBtn = document.getElementById("clearUploadBtn");
+const viewUploadBtn = document.getElementById("viewUploadBtn");
 
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
+let selectedSection = CONTENT_DIRS[0];
+let editorInstanceHeight = 560;
+let mediaItems = [];
+let currentPreviewUrl = null;
+let currentPreviewName = "image";
+let photoSelectActive = false;
+
+const isPhotoSection = (sectionVal) => {
+  const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
+  return value.includes("content/photos");
+};
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[data-src="${src}"]`)) return resolve();
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = true;
+    script.dataset.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function loadCss(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
 
 function showToast(message, isError = false) {
   toastEl.textContent = message;
@@ -39,18 +107,361 @@ function showLogin() {
   loginView.classList.remove("hidden");
   listView.classList.add("hidden");
   editorView.classList.add("hidden");
+  logoutBtn.classList.add("hidden");
 }
 
 function showList() {
   loginView.classList.add("hidden");
   listView.classList.remove("hidden");
   editorView.classList.add("hidden");
+  logoutBtn.classList.remove("hidden");
 }
 
 function showEditor() {
   loginView.classList.add("hidden");
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
+  logoutBtn.classList.remove("hidden");
+}
+
+function toggleMediaModal(open) {
+  if (!mediaModal) return;
+  if (open) clearUploadSelection(); // reset preview each time the modal opens
+  mediaModal.classList.toggle("hidden", !open);
+  if (open) loadMediaGallery().catch(() => {});
+}
+
+function openImagePreview(url, name = "image") {
+  if (!imagePreviewModal || !imagePreviewImg) return;
+  imagePreviewImg.src = url;
+  imagePreviewImg.alt = name;
+  imagePreviewModal.classList.remove("hidden");
+}
+
+function closeImagePreview() {
+  if (!imagePreviewModal || !imagePreviewImg) return;
+  imagePreviewModal.classList.add("hidden");
+  imagePreviewImg.removeAttribute("src");
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || "";
+      const base64 = typeof result === "string" ? result.split(",").pop() : "";
+      resolve(base64 || "");
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function toggleFieldVisibility(sectionVal) {
+  const isPhoto = isPhotoSection(sectionVal);
+  const tagsField = tagsInput?.closest("label");
+  const slugField = slugInput?.closest("label");
+  [tagsField, slugField, bodyBlock, shortcodeBtn, mediaBtn].forEach((el) => {
+    if (!el) return;
+    if (el.tagName === "BUTTON") el.classList.toggle("hidden", isPhoto);
+    else el.classList.toggle("hidden", isPhoto);
+  });
+  [photoPicker, captionField].forEach((el) => el?.classList.toggle("hidden", !isPhoto));
+}
+
+function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
+  if (!target) return;
+  if (!items.length) {
+    target.innerHTML = "<p class='hint'>No images in Nextcloud yet.</p>";
+    return;
+  }
+  target.innerHTML = "";
+  items.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "media-item";
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "media-thumb-wrap";
+    const img = document.createElement("img");
+    img.src = item.url;
+    img.alt = item.name || "Image";
+    img.className = "media-thumb";
+    const viewBtn = document.createElement("button");
+    viewBtn.type = "button";
+    viewBtn.className = "media-view-btn";
+    viewBtn.textContent = "View";
+    viewBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openImagePreview(item.url, item.name);
+    });
+    const meta = document.createElement("div");
+    meta.className = "media-meta";
+    const label = document.createElement("span");
+    label.textContent = item.name || "Image";
+    const size = document.createElement("span");
+    size.textContent = item.size ? `${Math.round(item.size / 1024)}kb` : "";
+    meta.appendChild(label);
+    meta.appendChild(size);
+    thumbWrap.appendChild(img);
+    btn.appendChild(thumbWrap);
+    btn.appendChild(viewBtn);
+    btn.appendChild(meta);
+    btn.addEventListener("click", () => {
+      if (typeof onSelect === "function") onSelect(item);
+      else insertImage(item.url, item.name);
+    });
+    target.appendChild(btn);
+  });
+}
+
+async function loadMediaGallery() {
+  if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+  if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+  try {
+    const data = await api("listImages");
+    mediaItems = Array.isArray(data.items) ? data.items : [];
+    renderMediaGallery(mediaItems, mediaGallery, (item) => insertImage(item.url, item.name));
+    renderMediaGallery(mediaItems, allUploadsGallery, (item) => openImagePreview(item.url, item.name));
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
+    if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    showToast(err.message, true);
+  }
+}
+
+function insertImage(url, name = "image") {
+  if (photoSelectActive) {
+    setPhotoImage(url, name);
+    photoSelectActive = false;
+    toggleMediaModal(false);
+    showToast("Image selected for photo");
+    return;
+  }
+  if (!editor) return;
+  const alt = (name || "image").replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+  const snippet = `![${alt}](${url})`;
+  editor.insertText(snippet + "\n");
+  toggleMediaModal(false);
+  showToast("Image inserted");
+}
+
+function toggleUploadProgress(show) {
+  if (!uploadProgress) return;
+  uploadProgress.classList.toggle("hidden", !show);
+  if (!show) {
+    uploadProgressBar?.style.setProperty("--upload-progress", "0%");
+    if (uploadProgressLabel) uploadProgressLabel.textContent = "0%";
+  }
+}
+
+function setUploadProgress(percent) {
+  if (!uploadProgressBar || !uploadProgressLabel) return;
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  uploadProgressBar.style.setProperty("--upload-progress", `${clamped}%`);
+  uploadProgressLabel.textContent = `${clamped}%`;
+}
+
+function toggleBulkProgress(show) {
+  if (!bulkUploadProgress) return;
+  bulkUploadProgress.classList.toggle("hidden", !show);
+  if (!show) {
+    bulkUploadProgressBar?.style.setProperty("--upload-progress", "0%");
+    if (bulkUploadProgressLabel) bulkUploadProgressLabel.textContent = "0%";
+  }
+}
+
+function setBulkProgress(percent, index = 1, total = 1) {
+  if (!bulkUploadProgressBar || !bulkUploadProgressLabel) return;
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  bulkUploadProgressBar.style.setProperty("--upload-progress", `${clamped}%`);
+  bulkUploadProgressLabel.textContent = `File ${index}/${total} — ${clamped}%`;
+}
+
+function showUploadPreview(url, name = "image") {
+  if (!uploadPreview || !uploadPreviewImg) return;
+  if (currentPreviewUrl && currentPreviewUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(currentPreviewUrl);
+  }
+  currentPreviewUrl = url;
+  currentPreviewName = name || "image";
+  uploadPreviewImg.src = url;
+  uploadPreviewImg.alt = name;
+  uploadPreview.classList.remove("hidden");
+}
+
+function clearUploadSelection() {
+  if (uploadPreview) uploadPreview.classList.add("hidden");
+  if (uploadPreviewImg) uploadPreviewImg.removeAttribute("src");
+  if (currentPreviewUrl && currentPreviewUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(currentPreviewUrl);
+  }
+  currentPreviewUrl = null;
+  currentPreviewName = "image";
+  if (imageInput) imageInput.value = "";
+  toggleUploadProgress(false);
+}
+
+function setPhotoImage(url, name = "image") {
+  if (photoImageInput) photoImageInput.value = url;
+  if (photoImagePreview) photoImagePreview.src = url;
+  if (photoImagePreviewName) photoImagePreviewName.textContent = name || url;
+  if (photoImagePreviewWrap) photoImagePreviewWrap.classList.remove("hidden");
+}
+
+function clearPhotoImage() {
+  if (photoImageInput) photoImageInput.value = "";
+  if (photoImagePreview) photoImagePreview.removeAttribute("src");
+  if (photoImagePreviewName) photoImagePreviewName.textContent = "";
+  if (photoImagePreviewWrap) photoImagePreviewWrap.classList.add("hidden");
+}
+
+function handleLocalFileSelection() {
+  if (!imageInput || !imageInput.files || !imageInput.files.length) {
+    clearUploadSelection();
+    return;
+  }
+  const file = imageInput.files[0];
+  if (!file.type.startsWith("image/")) {
+    showToast("Images only", true);
+    clearUploadSelection();
+    return;
+  }
+  toggleUploadProgress(false);
+  const previewUrl = URL.createObjectURL(file);
+  showUploadPreview(previewUrl, file.name);
+}
+
+function setInputFiles(files) {
+  if (!files?.length || !imageInput) {
+    clearUploadSelection();
+    return;
+  }
+  const file = files[0];
+  if (!file.type.startsWith("image/")) {
+    showToast("Images only", true);
+    clearUploadSelection();
+    return;
+  }
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  imageInput.files = dt.files;
+  handleLocalFileSelection();
+}
+
+async function uploadWithProgress(payload, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/.netlify/functions/uploadImage");
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (evt) => {
+      if (!evt.lengthComputable || typeof onProgress !== "function") return;
+      const percent = (evt.loaded / evt.total) * 100;
+      onProgress(percent);
+    };
+    xhr.onload = () => {
+      const status = xhr.status;
+      let data;
+      try { data = JSON.parse(xhr.responseText || "{}"); } catch { data = { error: xhr.responseText }; }
+      if (status === 401) return reject(new Error("unauthorized"));
+      if (status < 200 || status >= 300) {
+        return reject(new Error(data?.error || xhr.statusText || "Upload failed"));
+      }
+      resolve(data);
+    };
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
+async function uploadImage() {
+  if (!imageInput || !imageInput.files || !imageInput.files.length) {
+    showToast("Choose an image first", true);
+    return;
+  }
+  const file = imageInput.files[0];
+  if (!file.type.startsWith("image/")) {
+    showToast("Images only", true);
+    return;
+  }
+  try {
+    toggleUploadProgress(true);
+    setUploadProgress(5);
+    if (uploadImageBtn) uploadImageBtn.disabled = true;
+    const base64 = await fileToBase64(file);
+    const payload = {
+      name: file.name,
+      contentType: file.type,
+      data: base64,
+    };
+    const res = await uploadWithProgress(payload, (p) => setUploadProgress(Math.max(10, p)));
+    setUploadProgress(100);
+    if (res?.url) {
+      showUploadPreview(res.url, res.name || file.name);
+      if (imageInput) imageInput.value = "";
+      insertImage(res.url, res.name || file.name);
+      await loadMediaGallery();
+      showToast("Image uploaded");
+    }
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
+    showToast(err.message, true);
+  } finally {
+    if (uploadImageBtn) uploadImageBtn.disabled = false;
+    setTimeout(() => toggleUploadProgress(false), 600);
+  }
+}
+
+async function uploadBulkImages() {
+  if (!bulkImageInput || !bulkImageInput.files || !bulkImageInput.files.length) {
+    showToast("Select images to upload", true);
+    return;
+  }
+  const files = Array.from(bulkImageInput.files).filter((f) => f.type.startsWith("image/"));
+  if (!files.length) {
+    showToast("Images only", true);
+    bulkImageInput.value = "";
+    return;
+  }
+  let uploaded = 0;
+  try {
+    toggleBulkProgress(true);
+    if (bulkUploadBtn) bulkUploadBtn.disabled = true;
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      setBulkProgress(5, i + 1, files.length);
+      const base64 = await fileToBase64(file);
+      const payload = {
+        name: file.name,
+        contentType: file.type,
+        data: base64,
+      };
+      await uploadWithProgress(payload, (p) => setBulkProgress(Math.max(10, p), i + 1, files.length));
+      await loadMediaGallery().catch(() => {});
+      setBulkProgress(100, i + 1, files.length);
+      uploaded += 1;
+    }
+    showToast(`Uploaded ${uploaded}/${files.length} images`);
+    bulkImageInput.value = "";
+    await loadMediaGallery();
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
+    showToast(err.message, true);
+  } finally {
+    if (bulkUploadBtn) bulkUploadBtn.disabled = false;
+    setTimeout(() => toggleBulkProgress(false), 600);
+  }
 }
 
 function slugify(text) {
@@ -91,20 +502,21 @@ function parseFrontMatter(markdown) {
   return { fm, body: match[2] };
 }
 
-function buildFrontMatter(data) {
-  const safeTitle = data.title.replace(/"/g, '\\"');
-  const tags = (data.tags || [])
-    .map((t) => `"${t.trim().replace(/"/g, "")}"`)
-    .filter(Boolean)
-    .join(", ");
-  const lines = [
-    "---",
-    `title: "${safeTitle}"`,
-    `date: ${data.date}`,
-    `draft: ${data.draft ? "true" : "false"}`,
-    `tags: [${tags}]`,
-  ];
-  if (data.slug) lines.push(`slug: ${data.slug}`);
+function buildFrontMatter(data, isPhoto = false) {
+  const escapeVal = (val = "") => val.replace(/"/g, '\\"');
+  const safeTitle = escapeVal(data.title || "");
+  const lines = ["---", `title: "${safeTitle}"`, `date: ${data.date}`, `draft: ${data.draft ? "true" : "false"}`];
+  if (isPhoto) {
+    if (data.image) lines.push(`image: "${escapeVal(data.image)}"`);
+    if (data.caption) lines.push(`caption: "${escapeVal(data.caption)}"`);
+  } else {
+    const tags = (data.tags || [])
+      .map((t) => `"${t.trim().replace(/"/g, "")}"`)
+      .filter(Boolean)
+      .join(", ");
+    lines.push(`tags: [${tags}]`);
+    if (data.slug) lines.push(`slug: ${data.slug}`);
+  }
   lines.push("---", "");
   return lines.join("\n");
 }
@@ -128,16 +540,25 @@ async function api(path, options = {}) {
 
 async function loadPosts() {
   const data = await api("listPosts");
+  if (Array.isArray(data.contentDirs) && data.contentDirs.length) {
+    setSections(data.contentDirs);
+  }
   postsContainer.innerHTML = "";
   if (!data.items || !data.items.length) {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
     return;
   }
+  const selected = sectionFilter?.value || selectedSection || CONTENT_DIRS[0];
+  selectedSection = selected;
+  if (sectionInput) sectionInput.value = selected;
   data.items.forEach((item) => {
+    const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
+    if (section && section !== selected) return;
     const row = document.createElement("button");
     row.className = "post-row";
     row.type = "button";
-    row.innerHTML = `<div><strong>${item.name}</strong><br><span>${item.path}</span></div><span>${item.size}b</span>`;
+    const title = item.title || item.name;
+    row.innerHTML = `<div><strong>${title}</strong></div><span>${item.size}b</span>`;
     row.addEventListener("click", () => openPost(item.path));
     postsContainer.appendChild(row);
   });
@@ -152,8 +573,17 @@ async function openPost(path) {
     dateInput.value = fm.date ? formatDateInput(new Date(fm.date)) : formatDateInput(new Date());
     draftInput.checked = !!fm.draft;
     tagsInput.value = Array.isArray(fm.tags) ? fm.tags.join(", ") : "";
-    slugInput.value = fm.slug || "";
-    editor.setMarkdown(body || "");
+    if (slugInput) slugInput.value = fm.slug || "";
+    const section = (data.path || "").split("/").slice(0, -1).join("/");
+    if (sectionInput && section) sectionInput.value = section;
+    const photoMode = isPhotoSection(section);
+    if (photoImageInput) photoImageInput.value = photoMode ? fm.image || "" : "";
+    if (photoCaptionInput) photoCaptionInput.value = photoMode ? fm.caption || "" : "";
+    if (photoMode && fm.image) setPhotoImage(fm.image, fm.image);
+    else clearPhotoImage();
+    toggleFieldVisibility(section);
+    if (!photoMode) editor.setMarkdown(body || "");
+    else editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
   } catch (err) {
@@ -171,8 +601,15 @@ function newPost() {
   dateInput.value = formatDateInput(new Date());
   draftInput.checked = false;
   tagsInput.value = "";
-  slugInput.value = "";
+  if (slugInput) slugInput.value = "";
   editor.setMarkdown("");
+  photoImageInput && (photoImageInput.value = "");
+  photoCaptionInput && (photoCaptionInput.value = "");
+  clearPhotoImage();
+  toggleFieldVisibility(sectionInput?.value || selectedSection);
+  if (sectionInput && selectedSection) {
+    sectionInput.value = selectedSection;
+  }
   deletePostBtn.classList.add("hidden");
   showEditor();
 }
@@ -180,9 +617,11 @@ function newPost() {
 async function savePost() {
   const title = titleInput.value.trim();
   if (!title) return showToast("Title required", true);
-  const slug = slugInput.value.trim() || slugify(title);
+  const slug = (slugInput?.value || "").trim() || slugify(title);
   const date = new Date(dateInput.value || new Date());
-  const body = editor.getMarkdown();
+  const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
+  const photoMode = isPhotoSection(chosenDir);
+  const body = photoMode ? "" : editor.getMarkdown();
   const tags = tagsInput.value
     .split(",")
     .map((t) => t.trim())
@@ -193,10 +632,12 @@ async function savePost() {
     draft: draftInput.checked,
     tags,
     slug,
-  });
+    image: photoImageInput?.value.trim(),
+    caption: photoCaptionInput?.value.trim(),
+  }, photoMode);
   const content = `${fm}${body}`;
   const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
-  const path = currentPost?.path || `content/posts/${filename}`;
+  const path = currentPost?.path || `${chosenDir}/${filename}`;
   const payload = {
     path,
     content,
@@ -244,6 +685,7 @@ async function login(event) {
     await api("login", { method: "POST", body: JSON.stringify({ password }) });
     passwordInput.value = "";
     await loadPosts();
+    await loadMediaGallery().catch(() => {});
     showList();
   } catch (err) {
     if (err.message === "unauthorized") return showToast("Bad password", true);
@@ -287,6 +729,34 @@ function renderShortcodeFields(sc) {
   });
 }
 
+function setSections(sections) {
+  const opts = (sections || []).map((section) => ({
+    value: section,
+    label: section.replace(/^content\//, ""),
+  }));
+  if (sectionInput) {
+    sectionInput.innerHTML = "";
+    opts.forEach(({ value, label }) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      sectionInput.appendChild(opt);
+    });
+  }
+  if (sectionFilter) {
+    sectionFilter.innerHTML = "";
+    opts.forEach(({ value, label }) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      sectionFilter.appendChild(opt);
+    });
+  }
+  if (!selectedSection && opts.length) selectedSection = opts[0].value;
+  if (sectionInput && selectedSection) sectionInput.value = selectedSection;
+  if (sectionFilter && selectedSection) sectionFilter.value = selectedSection;
+}
+
 function applyTemplate(template, values) {
   return template.replace(/\$\{(.*?)\}/g, (_, key) => values[key] ?? "");
 }
@@ -320,7 +790,36 @@ async function loadShortcodes() {
   }
 }
 
-function init() {
+async function ensureToastUI() {
+  // Prefer local bundled assets to avoid CDN/MIME/blocked issues.
+  loadCss("toastui-editor.min.css");
+  if (!window.toastui?.Editor) {
+    try {
+      await loadScript("toastui-editor-all.min.js");
+    } catch (e) {
+      console.warn("Local Toast UI load failed", e);
+    }
+  }
+  // Final fallback: attempt CDN if local not available.
+  if (!window.toastui?.Editor) {
+    loadCss("https://uicdn.toast.com/editor/latest/toastui-editor.min.css");
+    try {
+      await loadScript("https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js");
+    } catch (e) {
+      console.warn("Primary Toast UI CDN failed", e);
+    }
+  }
+  if (!window.toastui?.Editor) throw new Error("Toast UI editor failed to load");
+}
+
+async function init() {
+  await ensureToastUI();
+  const setEditorHeight = () => {
+    editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
+    if (editor && typeof editor.setHeight === "function") {
+      editor.setHeight(editorInstanceHeight + "px");
+    }
+  };
   editor = new toastui.Editor({
     el: editorEl,
     height: "560px",
@@ -335,9 +834,11 @@ function init() {
     ],
   });
 
-  loginForm.addEventListener("submit", login);
   logoutBtn.addEventListener("click", logout);
-  refreshBtn.addEventListener("click", () => loadPosts().catch(() => {}));
+  refreshBtn.addEventListener("click", () => {
+    loadPosts().catch(() => {});
+    loadMediaGallery().catch(() => {});
+  });
   newPostBtn.addEventListener("click", newPost);
   backToListBtn.addEventListener("click", showList);
   savePostBtn.addEventListener("click", (e) => { e.preventDefault(); savePost(); });
@@ -352,14 +853,99 @@ function init() {
   shortcodeModal.addEventListener("click", (e) => {
     if (e.target === shortcodeModal) toggleShortcodeModal(false);
   });
+  if (mediaBtn) mediaBtn.addEventListener("click", () => toggleMediaModal(true));
+  if (closeMediaBtn) closeMediaBtn.addEventListener("click", () => toggleMediaModal(false));
+  if (uploadImageBtn) uploadImageBtn.addEventListener("click", uploadImage);
+  if (bulkUploadBtn) bulkUploadBtn.addEventListener("click", uploadBulkImages);
+  if (clearUploadBtn) {
+    clearUploadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearUploadSelection();
+    });
+  }
+  if (viewUploadBtn) {
+    viewUploadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentPreviewUrl) openImagePreview(currentPreviewUrl, currentPreviewName);
+    });
+  }
+  if (photoImageSelectBtn) {
+    photoImageSelectBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      photoSelectActive = true;
+      toggleMediaModal(true);
+    });
+  }
+  if (clearPhotoImageBtn) {
+    clearPhotoImageBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearPhotoImage();
+    });
+  }
+  if (closeImagePreviewBtn) closeImagePreviewBtn.addEventListener("click", closeImagePreview);
+  if (imageInput) {
+    imageInput.addEventListener("change", handleLocalFileSelection);
+  }
+  if (fileDrop) {
+    fileDrop.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+    fileDrop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer?.files?.length) {
+        setInputFiles(e.dataTransfer.files);
+      }
+    });
+  }
+  if (imagePreviewModal) {
+    imagePreviewModal.addEventListener("click", (e) => {
+      if (e.target === imagePreviewModal) closeImagePreview();
+    });
+  }
+  if (mediaModal) {
+    mediaModal.addEventListener("click", (e) => {
+      if (e.target === mediaModal) toggleMediaModal(false);
+    });
+  }
 
   loadShortcodes();
+  setSections(CONTENT_DIRS);
+  toggleFieldVisibility(selectedSection || CONTENT_DIRS[0]);
+  setEditorHeight();
+  window.addEventListener("resize", setEditorHeight);
+
   loadPosts()
+    .then(() => loadMediaGallery())
     .then(() => showList())
     .catch((err) => {
       if (err.message === "unauthorized") showLogin();
       else showToast(err.message, true);
     });
+
+  if (sectionFilter) {
+    sectionFilter.addEventListener("change", () => {
+      selectedSection = sectionFilter.value;
+      if (sectionInput) sectionInput.value = selectedSection;
+      loadPosts().catch(() => {});
+    });
+  }
+
+  if (sectionInput) {
+    sectionInput.addEventListener("change", () => {
+      toggleFieldVisibility(sectionInput.value);
+      loadPosts().catch(() => {});
+    });
+  }
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  loginForm.addEventListener("submit", login);
+  init().catch((err) => {
+    console.error(err);
+    showToast(err.message || "Failed to load editor", true);
+  });
+});
