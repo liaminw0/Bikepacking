@@ -64,7 +64,14 @@
 
 
 
-<h1>Journal</h1>
+
+<div class="journal-title-row">
+  <h1>Journal</h1>
+  <button class="journal-tags__toggle" type="button" aria-expanded="false" aria-controls="journal-tags-panel">
+    Show tags
+  </button>
+</div>
+
 
 
 
@@ -77,7 +84,7 @@
         <a href="/journal/test-shrotcode/">test shrotcode</a>
       </h3>
       <time datetime="2025-12-28T15:42:00Z">
-        December 28, 2025
+      December 28, 2025
       </time>
     </article>
     
@@ -86,7 +93,7 @@
         <a href="/journal/trail-notes/">Trail Notes</a>
       </h3>
       <time datetime="2025-12-24T12:07:28&#43;01:00">
-        December 24, 2025
+      December 24, 2025
       </time>
     </article>
     
@@ -95,7 +102,7 @@
         <a href="/journal/markdown-showcases/">Markdown Showcases</a>
       </h3>
       <time datetime="2025-12-24T11:02:00Z">
-        December 24, 2025
+      December 24, 2025
       </time>
     </article>
     
@@ -104,12 +111,12 @@
         <a href="/journal/my-first-post/">My First Post</a>
       </h3>
       <time datetime="2020-09-03T17:27:59&#43;07:00">
-        September 3, 2020
+      September 3, 2020
       </time>
     </article>
     
   </div>
-  <aside class="journal-tags">
+  <aside class="journal-tags" id="journal-tags-panel">
     <h3>Tags</h3>
     
     
@@ -141,13 +148,51 @@
     
   </aside>
 </div>
+<script>
+  (() => {
+    const toggle = document.querySelector('.journal-tags__toggle');
+    const panel = document.getElementById('journal-tags-panel');
+    if (!toggle || !panel || !window.matchMedia) return;
+
+    const mq = window.matchMedia('(max-width: 42rem)');
+
+    const setState = (open) => {
+      if (!mq.matches) return;
+      panel.classList.toggle('is-open', open);
+      panel.style.maxHeight = open ? `${panel.scrollHeight}px` : '0px';
+      toggle.setAttribute('aria-expanded', open);
+      panel.setAttribute('aria-hidden', (!open).toString());
+      toggle.textContent = open ? 'Hide tags' : 'Show tags';
+    };
+
+    const handleMediaChange = () => {
+      if (!mq.matches) {
+        panel.classList.remove('is-open');
+        panel.style.maxHeight = '';
+        panel.removeAttribute('aria-hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'Show tags';
+        return;
+      }
+      setState(false);
+    };
+
+    toggle.addEventListener('click', () => {
+      const next = !panel.classList.contains('is-open');
+      setState(next);
+    });
+
+    mq.addEventListener ? mq.addEventListener('change', handleMediaChange) : mq.addListener(handleMediaChange);
+    handleMediaChange();
+  })();
+</script>
 
 
 
 </main>
 	
 <footer>
-	<p>&copy;2025 Bikepacking to Istanbul</p>
+	<p>&copy;2026 Bikepacking to Istanbul</p>
 </footer>
 
 <script>

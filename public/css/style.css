@@ -28,6 +28,12 @@ body {
   margin: 0 auto;
 }
 
+.content {
+  padding-top: 0;
+  margin-bottom: 2rem;
+  flex: 1 0 auto;
+}
+
 .content a {
   color: var(--link);
   text-decoration: underline;
@@ -41,9 +47,35 @@ body {
   margin: 1.5rem 0;
 }
 
-.content {
-  margin-bottom: 2rem;
-  flex: 1 0 auto;
+.content h1,
+.content h2,
+.content h3,
+.home-split h2,
+.route-map h2 {
+  margin: 0 0 0.5rem;
+}
+
+.content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem 0;
+}
+
+@media screen and (max-width: 48rem) {
+  .content {
+    padding-top: 1rem;
+  }
+
+  .content section {
+    margin: 1rem 0;
+  }
+}
+
+@media screen and (min-width: 48rem) {
+  .content {
+    padding-top: 3rem;
+  }
 }
 
 /* NAVIGATION */
@@ -51,8 +83,22 @@ body {
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 1rem;
   flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.site-nav .logo {
+  font-weight: bold;
+  padding: 0;
+}
+
+.main-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0 0 0 auto;
+  padding: 0;
 }
 
 .site-nav a {
@@ -60,6 +106,10 @@ body {
   padding: 0.75rem 1rem;
   color: inherit;
   text-decoration: none;
+}
+
+.site-nav a:hover {
+  text-decoration: underline;
 }
 
 .theme-toggle {
@@ -73,16 +123,16 @@ body {
 
 .theme-toggle__icon {
   display: none;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 
 .theme-toggle__icon::before {
-  content: "☀";
+  content: "🌞";
 }
 
 [data-theme="dark"] .theme-toggle__icon::before {
-  content: "🌙";
+  content: "🌜";
 }
 
 .theme-toggle__label {
@@ -92,24 +142,6 @@ body {
 .theme-toggle:focus-visible {
   outline: 2px solid var(--link);
   outline-offset: 2px;
-}
-
-.site-nav .logo {
-  font-weight: bold;
-  padding-left: 1rem;
-}
-
-.main-menu {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0 0 0 auto;
-  padding: 0;
-}
-
-.site-nav a:hover {
-  text-decoration: underline;
 }
 
 .post-nav {
@@ -145,6 +177,7 @@ body {
 
   .site-nav .logo {
     order: 1;
+    padding: 0.5rem;
   }
 
   .theme-toggle {
@@ -180,7 +213,7 @@ body {
   }
 }
 
-/* LISTS */
+/* POSTS & LISTS */
 
 .post-snippet {
   margin-bottom: 1rem;
@@ -191,21 +224,31 @@ body {
 }
 
 .post-meta {
-  margin: 0.25rem 0 0.5rem 0;
+  margin: 0.25rem 0 0.5rem;
 }
 
-.content img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1rem 0;
-}
+/* JOURNAL */
 
 .journal-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(12rem, 1fr);
   gap: 1.75rem;
   align-items: start;
+}
+
+.journal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.journal-title-row h1 {
+  margin: 0;
+}
+
+.journal-title-row .journal-tags__toggle {
+  display: none;
 }
 
 .journal-list {
@@ -217,6 +260,10 @@ body {
   padding: 1rem;
 }
 
+.journal-tags__toggle {
+  display: none;
+}
+
 .journal-tags h3 {
   margin-top: 0;
 }
@@ -224,7 +271,7 @@ body {
 .tag-list {
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0 0 0;
+  margin: 0.5rem 0 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -240,7 +287,7 @@ body {
 }
 
 .tag-list__empty {
-  margin: 0.5rem 0 0 0;
+  margin: 0.5rem 0 0;
   color: var(--text);
   opacity: 0.7;
 }
@@ -248,6 +295,40 @@ body {
 @media screen and (max-width: 42rem) {
   .journal-layout {
     grid-template-columns: 1fr;
+  }
+
+  .journal-tags {
+    order: -1;
+    overflow: hidden;
+    max-height: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+  }
+
+  .journal-tags.is-open {
+    border: 1px solid var(--border);
+    padding: 1rem;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .journal-title-row .journal-tags__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  .journal-tags__toggle {
+    display: none;
   }
 }
 
@@ -258,6 +339,12 @@ body {
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin: 1.5rem 0;
+}
+
+@media screen and (max-width: 48rem) {
+  .photo-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .photo-grid__item {
@@ -294,12 +381,18 @@ body {
   margin-top: 0.5rem;
 }
 
-/* ABOUT BLURB */
+/* ABOUT */
+
 .about-blurb {
   display: flex;
-  gap: 1rem;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin: 1rem 0;
+}
+
+.about-avatar {
+  flex: 0 0 128px;
 }
 
 .about-avatar img {
@@ -310,16 +403,18 @@ body {
 }
 
 .about-blurb p {
-  margin: 0;
   flex: 1;
+  margin: 0;
+  text-align: center;
 }
 
 .about-links {
   list-style: none;
-  padding: 0;
-  margin: 0.5rem 0 0 0;
   display: flex;
   gap: 1rem;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  justify-content: center;
 }
 
 .about-links a {
@@ -330,13 +425,20 @@ body {
 .about-links a:hover {
   text-decoration: none;
 }
-.more-posts {
-  margin-top: auto;
-  padding-top: 0.5rem;
-  align-self: flex-start;
+
+@media screen and (max-width: 40rem) {
+  .about-blurb {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .about-avatar {
+    margin-inline: auto;
+  }
 }
 
-/* HOME SPLIT */
+/* HOME */
+
 .home-split {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
@@ -348,8 +450,6 @@ body {
   flex-direction: column;
   min-width: 0;
 }
-
-
 
 .latest-photo {
   display: flex;
@@ -378,9 +478,14 @@ body {
 }
 
 .latest-photo__caption {
-  margin: 0.5rem 0 0 0;
+  margin: 0.5rem 0 0;
 }
 
+.more-posts {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  align-self: flex-start;
+}
 
 .more-photos {
   margin-top: auto;
@@ -391,5 +496,27 @@ body {
 @media screen and (max-width: 48rem) {
   .home-split {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .home-split .posts-list,
+  .latest-photo {
+    align-items: center;
+    text-align: center;
+  }
+
+  .post-snippet,
+  .latest-photo__content,
+  .more-posts,
+  .more-photos {
+    width: 100%;
+  }
+
+  .route-map h2 {
+    text-align: center;
+  }
+
+  footer p {
+    text-align: center;
   }
 }

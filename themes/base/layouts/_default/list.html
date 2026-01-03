@@ -1,5 +1,14 @@
 {{ define "main" }}
-<h1>{{ if eq .Section "journal" }}Journal{{ else }}{{ .Title }}{{ end }}</h1>
+{{ if eq .Section "journal" }}
+<div class="journal-title-row">
+  <h1>Journal</h1>
+  <button class="journal-tags__toggle" type="button" aria-expanded="false" aria-controls="journal-tags-panel">
+    Show tags
+  </button>
+</div>
+{{ else }}
+<h1>{{ .Title }}</h1>
+{{ end }}
 
 {{ .Content }}
 
@@ -12,12 +21,12 @@
         <a href="{{ .RelPermalink }}">{{ .Title }}</a>
       </h3>
       <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
-        {{ .Date.Format "January 2, 2006" }}
+      {{ .Date.Format "January 2, 2006" }}
       </time>
     </article>
     {{ end }}
   </div>
-  <aside class="journal-tags">
+  <aside class="journal-tags" id="journal-tags-panel">
     <h3>Tags</h3>
     {{ $journalTags := slice }}
     {{ range $name, $term := .Site.Taxonomies.tags }}
@@ -41,6 +50,44 @@
     {{ end }}
   </aside>
 </div>
+<script>
+  (() => {
+    const toggle = document.querySelector('.journal-tags__toggle');
+    const panel = document.getElementById('journal-tags-panel');
+    if (!toggle || !panel || !window.matchMedia) return;
+
+    const mq = window.matchMedia('(max-width: 42rem)');
+
+    const setState = (open) => {
+      if (!mq.matches) return;
+      panel.classList.toggle('is-open', open);
+      panel.style.maxHeight = open ? `${panel.scrollHeight}px` : '0px';
+      toggle.setAttribute('aria-expanded', open);
+      panel.setAttribute('aria-hidden', (!open).toString());
+      toggle.textContent = open ? 'Hide tags' : 'Show tags';
+    };
+
+    const handleMediaChange = () => {
+      if (!mq.matches) {
+        panel.classList.remove('is-open');
+        panel.style.maxHeight = '';
+        panel.removeAttribute('aria-hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'Show tags';
+        return;
+      }
+      setState(false);
+    };
+
+    toggle.addEventListener('click', () => {
+      const next = !panel.classList.contains('is-open');
+      setState(next);
+    });
+
+    mq.addEventListener ? mq.addEventListener('change', handleMediaChange) : mq.addListener(handleMediaChange);
+    handleMediaChange();
+  })();
+</script>
 {{ else }}
   {{ range.Data.Pages }}
   <article class="post-snippet">
