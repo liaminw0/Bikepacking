@@ -9,13 +9,19 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">Hugo Admin</div>
+    <div class="brand-block">
+      <div class="brand">Hugo Admin</div>
+      <div class="topbar-subtitle">Tiny-screen post editor</div>
+    </div>
     <button id="logoutBtn" class="ghost small hidden" aria-label="Logout">Logout</button>
   </header>
 
   <main class="page">
     <section id="loginView" class="card">
-      <h1>Admin Login</h1>
+      <div class="section-heading">
+        <h1>Admin Login</h1>
+        <p class="hint">Simple access for on-phone editing.</p>
+      </div>
       <form id="loginForm">
         <label>
           Password
@@ -27,88 +33,123 @@
     </section>
 
     <section id="listView" class="card hidden">
-      <div class="list-header">
-        <div class="list-title">
-          <h1>Posts</h1>
-          <label class="inline">
-            <span>Section</span>
-            <select id="sectionFilter"></select>
-          </label>
-        </div>
-        <div class="actions">
+      <div class="section-heading">
+        <h1>Posts</h1>
+        <p class="hint">Choose a post or start a new one.</p>
+      </div>
+      <div class="list-toolbar">
+        <label class="inline inline--stack">
+          <span>Section</span>
+          <select id="sectionFilter"></select>
+        </label>
+        <div class="actions actions--stack">
           <button id="refreshBtn" class="ghost small">Refresh</button>
           <button id="newPostBtn" class="primary small">New post</button>
         </div>
       </div>
-      <div id="postsContainer" class="list"></div>
+      <div class="content-block">
+        <div class="block-heading">
+          <h2>Entries</h2>
+        </div>
+        <div id="postsContainer" class="list"></div>
+      </div>
 
-      <div class="uploads-panel">
-        <div class="list-header">
-          <div class="list-title">
-            <h2>All uploads</h2>
-            <span class="hint">From Nextcloud</span>
+      <div class="uploads-panel content-block">
+        <div class="block-heading">
+          <div>
+            <h2>Uploads</h2>
+            <span class="hint">Browse or add images</span>
           </div>
-          <div class="actions">
-            <label class="ghost small upload-multi-btn">
-              <input type="file" id="bulkImageInput" accept="image/*" multiple>
-              Select images
-            </label>
-            <button type="button" id="bulkUploadBtn" class="primary small">Upload selected</button>
-          </div>
+        </div>
+        <div class="compact-upload-stack">
+          <label class="upload-multi-btn compact-upload-trigger">
+            <input type="file" id="bulkImageInput" accept="image/*" multiple>
+            Select images
+          </label>
+          <button type="button" id="bulkUploadBtn" class="primary small">Upload selected</button>
         </div>
         <div class="upload-progress hidden" id="bulkUploadProgress">
           <div class="upload-progress__bar" id="bulkUploadProgressBar"></div>
           <span class="upload-progress__label" id="bulkUploadProgressLabel">0%</span>
         </div>
-        <div class="media-gallery" id="allUploadsGallery">
+        <div class="media-gallery media-gallery--compact" id="allUploadsGallery">
           <p class="hint">Loading images...</p>
         </div>
       </div>
     </section>
 
     <section id="editorView" class="card hidden">
-      <div class="editor-header">
+      <div class="editor-header editor-header--compact">
         <button id="backToListBtn" class="ghost small">← Posts</button>
         <div class="editor-actions">
-          <button id="deletePostBtn" class="danger small hidden">Delete</button>
           <button id="savePostBtn" class="primary">Save</button>
+          <button id="deletePostBtn" class="danger small hidden">Delete</button>
         </div>
       </div>
+      <div class="section-heading">
+        <h1>Post editor</h1>
+        <p class="hint">All fields stay available in one vertical flow.</p>
+      </div>
       <form id="editorForm" class="editor-form">
-        <label>
-          Title
-          <input type="text" id="titleInput" required>
-        </label>
-        <label>
-          Date
-          <input type="datetime-local" id="dateInput" required>
-        </label>
-        <input type="hidden" id="sectionInput">
-        <label class="row">
-          <span>Draft</span>
-          <input type="checkbox" id="draftInput">
-        </label>
-      <label>
-        Tags (comma separated)
-        <input type="text" id="tagsInput" placeholder="tag1, tag2">
-      </label>
-      <input type="hidden" id="slugInput">
-        <div id="photoPicker" class="photo-picker hidden">
-          <input type="hidden" id="photoImageInput">
-          <div class="photo-picker__preview hidden" id="photoImagePreviewWrap">
-            <img id="photoImagePreview" alt="Selected image">
-            <div class="photo-picker__meta" id="photoImagePreviewName"></div>
-            <button type="button" class="ghost small" id="clearPhotoImageBtn" aria-label="Remove selected image">✕</button>
+        <div class="editor-section">
+          <div class="block-heading">
+            <h2>Basics</h2>
           </div>
-          <button type="button" id="photoImageSelectBtn" class="ghost block">Select or upload image</button>
+          <label>
+            Title
+            <input type="text" id="titleInput" required>
+          </label>
+          <label>
+            Date
+            <input type="datetime-local" id="dateInput" required>
+          </label>
+          <input type="hidden" id="sectionInput">
+          <label class="row row--toggle">
+            <span>Draft</span>
+            <input type="checkbox" id="draftInput">
+          </label>
         </div>
-        <label id="captionField" class="hidden">
-          Caption
-          <textarea id="photoCaptionInput" rows="3" placeholder="Short caption for the photo"></textarea>
-        </label>
-        <div id="bodyBlock">
+
+        <div class="editor-section">
+          <div class="block-heading">
+            <h2>Metadata</h2>
+          </div>
+          <label>
+            Tags (comma separated)
+            <input type="text" id="tagsInput" placeholder="tag1, tag2">
+          </label>
+          <input type="hidden" id="slugInput">
+        </div>
+
+        <div class="editor-section editor-section--media">
+          <div class="block-heading">
+            <h2>Photo</h2>
+            <span class="hint">Compact image picker for posts and photos</span>
+          </div>
+          <div id="photoPicker" class="photo-picker hidden">
+            <input type="hidden" id="photoImageInput">
+            <div class="photo-picker__preview hidden" id="photoImagePreviewWrap">
+              <img id="photoImagePreview" alt="Selected image">
+              <div class="photo-picker__meta" id="photoImagePreviewName"></div>
+              <button type="button" class="ghost small" id="clearPhotoImageBtn" aria-label="Remove selected image">✕</button>
+            </div>
+            <button type="button" id="photoImageSelectBtn" class="ghost block">Select or upload image</button>
+          </div>
+          <label id="captionField" class="hidden">
+            Caption
+            <textarea id="photoCaptionInput" rows="3" placeholder="Short caption for the photo"></textarea>
+          </label>
+        </div>
+
+        <div id="bodyBlock" class="editor-section editor-section--body">
+          <div class="block-heading">
+            <h2>Body</h2>
+          </div>
           <div class="shortcode-bar">
-            <span>Body</span>
+            <div class="shortcode-intro">
+              <span>Writing tools</span>
+              <span class="hint">Images and shortcodes stay one tap away.</span>
+            </div>
             <div class="shortcode-actions">
               <button type="button" id="mediaBtn" class="ghost small">Images</button>
               <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
@@ -144,11 +185,12 @@
         <button id="closeMediaBtn" class="ghost small">✕</button>
       </div>
       <div class="media-upload">
+        <div class="compact-upload-stack">
         <label class="file-drop" id="fileDrop">
           <input type="file" id="imageInput" accept="image/*">
-          <div>
-            <strong>Select or drop an image</strong>
-            <p class="hint">Images stay in Nextcloud. Credentials are kept server-side.</p>
+          <div class="file-drop__copy">
+            <strong>Select image</strong>
+            <p class="hint">Tap to choose or drop a file.</p>
           </div>
           <div class="upload-preview hidden" id="uploadPreview">
             <img id="uploadPreviewImg" alt="Uploaded image preview">
@@ -156,14 +198,15 @@
             <button type="button" class="ghost small" id="viewUploadBtn" aria-label="View selected image">View</button>
           </div>
         </label>
+        <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
+        </div>
         <div class="upload-progress hidden" id="uploadProgress">
           <div class="upload-progress__bar" id="uploadProgressBar"></div>
           <span class="upload-progress__label" id="uploadProgressLabel">0%</span>
         </div>
-        <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
         <p class="hint" id="uploadHint">Max 10MB. Images only.</p>
       </div>
-      <div class="media-gallery" id="mediaGallery">
+      <div class="media-gallery media-gallery--compact" id="mediaGallery">
         <p class="hint">Loading images...</p>
       </div>
     </div>
