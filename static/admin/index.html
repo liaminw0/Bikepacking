@@ -181,6 +181,21 @@
     </div>
   </div>
 
+  <div id="exitConfirmModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Leave editor?</h2>
+        <button id="closeExitConfirmBtn" class="ghost small" type="button">✕</button>
+      </div>
+      <p class="hint">You have unsaved changes. Save before leaving this post?</p>
+      <div class="modal-actions modal-actions--stack">
+        <button id="saveExitBtn" class="primary block" type="button">Save & exit</button>
+        <button id="discardExitBtn" class="ghost block" type="button">Discard changes</button>
+        <button id="cancelExitBtn" class="ghost block" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script src="toastui-editor-all.min.js"></script>

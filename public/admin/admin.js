@@ -32,6 +32,11 @@ const closeMediaBtn = document.getElementById("closeMediaBtn");
 const imagePreviewModal = document.getElementById("imagePreviewModal");
 const closeImagePreviewBtn = document.getElementById("closeImagePreviewBtn");
 const imagePreviewImg = document.getElementById("imagePreviewImg");
+const exitConfirmModal = document.getElementById("exitConfirmModal");
+const closeExitConfirmBtn = document.getElementById("closeExitConfirmBtn");
+const saveExitBtn = document.getElementById("saveExitBtn");
+const discardExitBtn = document.getElementById("discardExitBtn");
+const cancelExitBtn = document.getElementById("cancelExitBtn");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
@@ -69,11 +74,124 @@ let mediaItems = [];
 let currentPreviewUrl = null;
 let currentPreviewName = "image";
 let photoSelectActive = false;
+let currentRoute = null;
+let suppressHashChange = false;
+let initialEditorState = null;
+let pendingRoute = null;
+let isRouting = false;
 
 const isPhotoSection = (sectionVal) => {
   const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
   return value.includes("content/photos");
 };
+
+function parseRoute() {
+  const hash = window.location.hash.replace(/^#/, "");
+  const normalized = hash.startsWith("/") ? hash : `/${hash || ""}`;
+  const [pathPart, query = ""] = normalized.split("?");
+  const segments = pathPart.split("/").filter(Boolean);
+  const params = new URLSearchParams(query);
+  if (segments[0] === "editor" && segments[1] === "new") {
+    return { view: "editor-new", section: params.get("section") || selectedSection || CONTENT_DIRS[0] };
+  }
+  if (segments[0] === "editor" && segments[1] === "edit") {
+    return { view: "editor-edit", path: params.get("path") || "" };
+  }
+  if (segments[0] === "login") return { view: "login" };
+  return { view: "posts", section: params.get("section") || selectedSection || CONTENT_DIRS[0] };
+}
+
+function routeToHash(route) {
+  if (!route) return "#/posts";
+  if (route.view === "login") return "#/login";
+  if (route.view === "editor-new") {
+    const params = new URLSearchParams();
+    if (route.section) params.set("section", route.section);
+    return `#/editor/new${params.toString() ? `?${params.toString()}` : ""}`;
+  }
+  if (route.view === "editor-edit") {
+    const params = new URLSearchParams();
+    if (route.path) params.set("path", route.path);
+    return `#/editor/edit${params.toString() ? `?${params.toString()}` : ""}`;
+  }
+  const params = new URLSearchParams();
+  if (route.section) params.set("section", route.section);
+  return `#/posts${params.toString() ? `?${params.toString()}` : ""}`;
+}
+
+function sameRoute(a, b) {
+  return routeToHash(a) === routeToHash(b);
+}
+
+function setRoute(route, { replace = false } = {}) {
+  const nextHash = routeToHash(route);
+  if (window.location.hash === nextHash) {
+    currentRoute = route;
+    return;
+  }
+  suppressHashChange = true;
+  if (replace) {
+    window.history.replaceState(null, "", nextHash);
+  } else {
+    window.location.hash = nextHash;
+  }
+  currentRoute = route;
+  setTimeout(() => { suppressHashChange = false; }, 0);
+}
+
+function getEditorState() {
+  return {
+    title: titleInput?.value || "",
+    date: dateInput?.value || "",
+    draft: !!draftInput?.checked,
+    tags: tagsInput?.value || "",
+    slug: slugInput?.value || "",
+    section: sectionInput?.value || selectedSection || CONTENT_DIRS[0],
+    body: editor ? editor.getMarkdown() : "",
+    photoImage: photoImageInput?.value || "",
+    photoCaption: photoCaptionInput?.value || "",
+  };
+}
+
+function normalizeState(state) {
+  return JSON.stringify({
+    title: (state.title || "").trim(),
+    date: state.date || "",
+    draft: !!state.draft,
+    tags: (state.tags || "").trim(),
+    slug: (state.slug || "").trim(),
+    section: state.section || "",
+    body: state.body || "",
+    photoImage: (state.photoImage || "").trim(),
+    photoCaption: (state.photoCaption || "").trim(),
+  });
+}
+
+function markEditorClean() {
+  initialEditorState = normalizeState(getEditorState());
+}
+
+function hasUnsavedChanges() {
+  if (!editorView || editorView.classList.contains("hidden")) return false;
+  if (!initialEditorState) return false;
+  return normalizeState(getEditorState()) !== initialEditorState;
+}
+
+function toggleExitConfirmModal(open) {
+  if (!exitConfirmModal) return;
+  exitConfirmModal.classList.toggle("hidden", !open);
+}
+
+async function attemptRouteChange(targetRoute) {
+  if (!currentRoute || !currentRoute.view?.startsWith("editor") || !hasUnsavedChanges()) {
+    await applyRoute(targetRoute);
+    return true;
+  }
+  pendingRoute = targetRoute;
+  toggleExitConfirmModal(true);
+  if (currentRoute) setRoute(currentRoute, { replace: true });
+  return false;
+}
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -104,6 +222,7 @@ function showToast(message, isError = false) {
 }
 
 function showLogin() {
+  currentRoute = { view: "login" };
   loginView.classList.remove("hidden");
   listView.classList.add("hidden");
   editorView.classList.add("hidden");
@@ -111,6 +230,7 @@ function showLogin() {
 }
 
 function showList() {
+  currentRoute = currentRoute?.view === "posts" ? currentRoute : { view: "posts", section: selectedSection };
   loginView.classList.add("hidden");
   listView.classList.remove("hidden");
   editorView.classList.add("hidden");
@@ -559,7 +679,7 @@ async function loadPosts() {
     row.type = "button";
     const title = item.title || item.name;
     row.innerHTML = `<div><strong>${title}</strong></div><span>${item.size}b</span>`;
-    row.addEventListener("click", () => openPost(item.path));
+    row.addEventListener("click", () => setRoute({ view: "editor-edit", path: item.path }));
     postsContainer.appendChild(row);
   });
 }
@@ -586,6 +706,8 @@ async function openPost(path) {
     else editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
+    currentRoute = { view: "editor-edit", path: data.path };
+    markEditorClean();
   } catch (err) {
     if (err.message === "unauthorized") {
       showLogin();
@@ -612,9 +734,12 @@ function newPost() {
   }
   deletePostBtn.classList.add("hidden");
   showEditor();
+  currentRoute = { view: "editor-new", section: sectionInput?.value || selectedSection || CONTENT_DIRS[0] };
+  markEditorClean();
 }
 
-async function savePost() {
+async function savePost(options = {}) {
+  const { returnToRoute = null } = options;
   const title = titleInput.value.trim();
   if (!title) return showToast("Title required", true);
   const slug = (slugInput?.value || "").trim() || slugify(title);
@@ -645,10 +770,16 @@ async function savePost() {
     sha: currentPost?.sha,
   };
   try {
-    await api("savePost", { method: "POST", body: JSON.stringify(payload) });
+    const res = await api("savePost", { method: "POST", body: JSON.stringify(payload) });
+    currentPost = { path: res.path || path, sha: res.sha };
+    if (!currentPost.path) currentPost.path = path;
+    const nextEditorRoute = { view: "editor-edit", path: currentPost.path };
+    currentRoute = nextEditorRoute;
+    setRoute(nextEditorRoute, { replace: true });
+    markEditorClean();
     showToast("Saved");
-    showList();
     await loadPosts();
+    if (returnToRoute) await applyRoute(returnToRoute);
   } catch (err) {
     if (err.message === "unauthorized") return showLogin();
     showToast(err.message, true);
@@ -669,7 +800,9 @@ async function deletePost() {
       }),
     });
     showToast("Deleted");
-    showList();
+    currentPost = null;
+    initialEditorState = null;
+    await applyRoute({ view: "posts", section: selectedSection });
     await loadPosts();
   } catch (err) {
     if (err.message === "unauthorized") return showLogin();
@@ -686,7 +819,7 @@ async function login(event) {
     passwordInput.value = "";
     await loadPosts();
     await loadMediaGallery().catch(() => {});
-    showList();
+    await applyRoute(parseRoute());
   } catch (err) {
     if (err.message === "unauthorized") return showToast("Bad password", true);
     showToast(err.message, true);
@@ -695,6 +828,11 @@ async function login(event) {
 
 async function logout() {
   await api("logout", { method: "POST" }).catch(() => {});
+  currentPost = null;
+  initialEditorState = null;
+  pendingRoute = null;
+  toggleExitConfirmModal(false);
+  setRoute({ view: "login" }, { replace: true });
   showLogin();
 }
 
@@ -839,8 +977,12 @@ async function init() {
     loadPosts().catch(() => {});
     loadMediaGallery().catch(() => {});
   });
-  newPostBtn.addEventListener("click", newPost);
-  backToListBtn.addEventListener("click", showList);
+  newPostBtn.addEventListener("click", () => {
+    setRoute({ view: "editor-new", section: selectedSection || sectionInput?.value || CONTENT_DIRS[0] });
+  });
+  backToListBtn.addEventListener("click", () => {
+    attemptRouteChange({ view: "posts", section: selectedSection || sectionFilter?.value || CONTENT_DIRS[0] });
+  });
   savePostBtn.addEventListener("click", (e) => { e.preventDefault(); savePost(); });
   deletePostBtn.addEventListener("click", deletePost);
   shortcodeBtn.addEventListener("click", () => toggleShortcodeModal(true));
@@ -911,16 +1053,53 @@ async function init() {
       if (e.target === mediaModal) toggleMediaModal(false);
     });
   }
+  if (exitConfirmModal) {
+    exitConfirmModal.addEventListener("click", (e) => {
+      if (e.target === exitConfirmModal) toggleExitConfirmModal(false);
+    });
+  }
+  if (closeExitConfirmBtn) closeExitConfirmBtn.addEventListener("click", () => {
+    pendingRoute = null;
+    toggleExitConfirmModal(false);
+  });
+  if (cancelExitBtn) cancelExitBtn.addEventListener("click", () => {
+    pendingRoute = null;
+    toggleExitConfirmModal(false);
+  });
+  if (discardExitBtn) discardExitBtn.addEventListener("click", async () => {
+    const route = pendingRoute || { view: "posts", section: selectedSection };
+    pendingRoute = null;
+    toggleExitConfirmModal(false);
+    initialEditorState = normalizeState(getEditorState());
+    await applyRoute(route);
+  });
+  if (saveExitBtn) saveExitBtn.addEventListener("click", async () => {
+    const route = pendingRoute || { view: "posts", section: selectedSection };
+    pendingRoute = null;
+    toggleExitConfirmModal(false);
+    await savePost({ returnToRoute: route });
+  });
 
   loadShortcodes();
   setSections(CONTENT_DIRS);
   toggleFieldVisibility(selectedSection || CONTENT_DIRS[0]);
   setEditorHeight();
   window.addEventListener("resize", setEditorHeight);
+  window.addEventListener("beforeunload", (event) => {
+    if (!hasUnsavedChanges()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+  window.addEventListener("hashchange", async () => {
+    if (suppressHashChange || isRouting) return;
+    const targetRoute = parseRoute();
+    if (sameRoute(targetRoute, currentRoute)) return;
+    await attemptRouteChange(targetRoute);
+  });
 
   loadPosts()
     .then(() => loadMediaGallery())
-    .then(() => showList())
+    .then(() => applyRoute(parseRoute()))
     .catch((err) => {
       if (err.message === "unauthorized") showLogin();
       else showToast(err.message, true);
@@ -930,6 +1109,7 @@ async function init() {
     sectionFilter.addEventListener("change", () => {
       selectedSection = sectionFilter.value;
       if (sectionInput) sectionInput.value = selectedSection;
+      setRoute({ view: "posts", section: selectedSection });
       loadPosts().catch(() => {});
     });
   }
@@ -937,8 +1117,54 @@ async function init() {
   if (sectionInput) {
     sectionInput.addEventListener("change", () => {
       toggleFieldVisibility(sectionInput.value);
-      loadPosts().catch(() => {});
+      if (currentRoute?.view === "editor-new") {
+        currentRoute = { view: "editor-new", section: sectionInput.value };
+        setRoute(currentRoute, { replace: true });
+      }
     });
+  }
+}
+
+async function applyRoute(route) {
+  isRouting = true;
+  try {
+    if (route.view === "login") {
+      currentRoute = route;
+      showLogin();
+      return;
+    }
+    if (route.view === "posts") {
+      if (route.section) {
+        selectedSection = route.section;
+        if (sectionFilter) sectionFilter.value = selectedSection;
+        if (sectionInput) sectionInput.value = selectedSection;
+      }
+      currentRoute = { view: "posts", section: selectedSection };
+      await loadPosts();
+      showList();
+      return;
+    }
+    if (route.view === "editor-edit" && route.path) {
+      setRoute(route, { replace: true });
+      await openPost(route.path);
+      return;
+    }
+    if (route.view === "editor-new") {
+      if (route.section) {
+        selectedSection = route.section;
+        if (sectionInput) sectionInput.value = selectedSection;
+        if (sectionFilter) sectionFilter.value = selectedSection;
+      }
+      setRoute({ view: "editor-new", section: selectedSection }, { replace: true });
+      newPost();
+      return;
+    }
+    currentRoute = { view: "posts", section: selectedSection };
+    setRoute(currentRoute, { replace: true });
+    await loadPosts();
+    showList();
+  } finally {
+    isRouting = false;
   }
 }
 

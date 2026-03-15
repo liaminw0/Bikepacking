@@ -214,6 +214,14 @@ button.block { width: 100%; }
   justify-content: space-between;
   align-items: center;
 }
+.modal-actions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.modal-actions--stack {
+  grid-template-columns: 1fr;
+}
 .media-modal {
   display: grid;
   gap: 0.75rem;
