@@ -132,11 +132,11 @@ function setRoute(route, { replace = false } = {}) {
   if (replace) {
     suppressHashChange = true;
     window.history.replaceState(null, "", nextHash);
+    currentRoute = route;
     setTimeout(() => { suppressHashChange = false; }, 0);
   } else {
     window.location.hash = nextHash;
   }
-  currentRoute = route;
 }
 
 function getEditorState() {
