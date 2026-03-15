@@ -45,6 +45,7 @@ const photoCaptionInput = document.getElementById("photoCaptionInput");
 const photoImagePreview = document.getElementById("photoImagePreview");
 const photoImagePreviewName = document.getElementById("photoImagePreviewName");
 const photoImagePreviewWrap = document.getElementById("photoImagePreviewWrap");
+const photoSection = document.getElementById("photoSection");
 const photoImageSelectBtn = document.getElementById("photoImageSelectBtn");
 const clearPhotoImageBtn = document.getElementById("clearPhotoImageBtn");
 const photoPicker = document.getElementById("photoPicker");
@@ -286,6 +287,7 @@ function toggleFieldVisibility(sectionVal) {
     if (el.tagName === "BUTTON") el.classList.toggle("hidden", isPhoto);
     else el.classList.toggle("hidden", isPhoto);
   });
+  photoSection?.classList.toggle("hidden", !isPhoto);
   [photoPicker, captionField].forEach((el) => el?.classList.toggle("hidden", !isPhoto));
 }
 
