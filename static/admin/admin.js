@@ -78,6 +78,10 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   });
 }
 
+if ("scrollRestoration" in window.history) {
+  window.history.scrollRestoration = "manual";
+}
+
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
@@ -153,6 +157,15 @@ function setRoute(route, { replace = false } = {}) {
   } else {
     window.location.hash = nextHash;
   }
+}
+
+function setCleanAdminUrl({ replace = true } = {}) {
+  if (!window.location.hash) return;
+  const cleanUrl = `${window.location.pathname}${window.location.search}`;
+  suppressHashChange = true;
+  if (replace) window.history.replaceState(null, "", cleanUrl);
+  else window.history.pushState(null, "", cleanUrl);
+  setTimeout(() => { suppressHashChange = false; }, 0);
 }
 
 function getEditorState() {
@@ -237,6 +250,17 @@ function showToast(message, isError = false) {
   setTimeout(() => toastEl.classList.add("hidden"), 3000);
 }
 
+function scrollPageToTop() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.requestAnimationFrame(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  });
+}
+
 function showLogin() {
   currentRoute = { view: "login" };
   loginView.classList.remove("hidden");
@@ -258,6 +282,7 @@ function showEditor() {
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
+  scrollPageToTop();
 }
 
 function toggleMediaModal(open) {
@@ -1361,6 +1386,7 @@ async function applyRoute(route) {
         if (sectionInput) sectionInput.value = selectedSection;
       }
       currentRoute = { view: "posts", section: selectedSection };
+      setCleanAdminUrl({ replace: true });
       await loadPosts();
       showList();
       return;
