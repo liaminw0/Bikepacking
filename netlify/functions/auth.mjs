@@ -1,7 +1,6 @@
-import jwt from "jsonwebtoken";
-
 export const COOKIE_NAME = "hugo_admin";
 const WEEK = 7 * 24 * 60 * 60;
+const encoder = new TextEncoder();
 
 const baseHeaders = {
   "Content-Type": "application/json",
@@ -77,18 +76,70 @@ export function parseCookies(header = "") {
   }, {});
 }
 
-export function signToken(payload) {
-  const { jwtSecret } = getEnv({ requireGithub: false });
-  return jwt.sign(payload, jwtSecret, { expiresIn: `${WEEK}s` });
+function toBase64Url(value) {
+  const bytes = typeof value === "string" ? encoder.encode(value) : value;
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-export function verifyRequest(event) {
+function fromBase64Url(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function importSigningKey(secret) {
+  return crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
+}
+
+async function createSignature(input, secret) {
+  const key = await importSigningKey(secret);
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(input));
+  return toBase64Url(new Uint8Array(signature));
+}
+
+function decodeJsonSegment(segment) {
+  const bytes = fromBase64Url(segment);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+export async function signToken(payload) {
+  const { jwtSecret } = getEnv({ requireGithub: false });
+  const header = { alg: "HS256", typ: "JWT" };
+  const body = {
+    ...payload,
+    exp: Math.floor(Date.now() / 1000) + WEEK,
+  };
+  const encodedHeader = toBase64Url(JSON.stringify(header));
+  const encodedBody = toBase64Url(JSON.stringify(body));
+  const signature = await createSignature(`${encodedHeader}.${encodedBody}`, jwtSecret);
+  return `${encodedHeader}.${encodedBody}.${signature}`;
+}
+
+export async function verifyRequest(event) {
   try {
     const cookies = parseCookies(event.headers?.cookie || event.headers?.Cookie || "");
     const token = cookies[COOKIE_NAME];
     if (!token) return { ok: false, response: unauthorized() };
     const { jwtSecret } = getEnv({ requireGithub: false });
-    const payload = jwt.verify(token, jwtSecret);
+    const [encodedHeader, encodedBody, signature] = token.split(".");
+    if (!encodedHeader || !encodedBody || !signature) return { ok: false, response: unauthorized() };
+    const expectedSignature = await createSignature(`${encodedHeader}.${encodedBody}`, jwtSecret);
+    if (signature !== expectedSignature) return { ok: false, response: unauthorized() };
+    const payload = decodeJsonSegment(encodedBody);
+    if (!payload?.exp || payload.exp < Math.floor(Date.now() / 1000)) {
+      return { ok: false, response: unauthorized() };
+    }
     return { ok: true, payload };
   } catch (err) {
     console.error("Auth error", err);

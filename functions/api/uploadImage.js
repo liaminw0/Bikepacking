@@ -55,7 +55,7 @@ async function uploadToNextcloud(url, buffer, cfg, contentType) {
 }
 
 async function handler(event) {
-  const auth = verifyRequest(event);
+  const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method not allowed" });
 

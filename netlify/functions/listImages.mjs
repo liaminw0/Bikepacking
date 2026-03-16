@@ -49,7 +49,7 @@ const parsePropfind = (xml, cfg) => {
 };
 
 export const handler = async (event) => {
-  const auth = verifyRequest(event);
+  const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   if (event.httpMethod !== "GET") return jsonResponse(405, { error: "Method not allowed" });
   let cfg;

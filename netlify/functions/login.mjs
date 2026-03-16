@@ -13,6 +13,6 @@ export const handler = async (event) => {
   if (password !== env.adminPassword) {
     return unauthorized("Invalid password");
   }
-  const token = signToken({ role: "admin" });
+  const token = await signToken({ role: "admin" });
   return jsonResponse(200, { ok: true }, { "Set-Cookie": authCookie(token) });
 };

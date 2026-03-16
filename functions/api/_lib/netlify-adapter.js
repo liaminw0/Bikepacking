@@ -73,6 +73,14 @@ export function createNetlifyOnRequest(handler) {
       const event = await createEvent(context.request);
       const result = await handler(event, context);
       return toResponse(result);
+    } catch (error) {
+      console.error("Function adapter error", error);
+      return new Response(JSON.stringify({ error: "Internal server error" }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     } finally {
       restoreEnv();
     }

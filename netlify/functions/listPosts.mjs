@@ -1,7 +1,7 @@
 import { enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
 
 export const handler = async (event) => {
-  const auth = verifyRequest(event);
+  const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   const env = getEnv();
   try {
