@@ -545,6 +545,9 @@ function renderPickerGallery() {
   if (loadMoreMediaBtn) {
     const shouldShow = pickerMediaItems.length < totalMediaItems;
     loadMoreMediaBtn.classList.toggle("hidden", !shouldShow);
+    if (shouldShow) {
+      mediaGallery.appendChild(loadMoreMediaBtn);
+    }
   }
 }
 

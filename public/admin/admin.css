@@ -864,6 +864,12 @@ label {
   min-height: 2.8rem;
 }
 
+.media-load-more-btn {
+  width: 100%;
+  min-height: 2.8rem;
+  flex: 0 0 auto;
+}
+
 .media-open-btn {
   margin-top: 0.15rem;
 }
