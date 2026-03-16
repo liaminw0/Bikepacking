@@ -1,4 +1,4 @@
-const SHELL_CACHE = "admin-shell-v1";
+const SHELL_CACHE = "admin-shell-v2";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -43,6 +43,17 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request)),
+    fetch(request)
+      .then((response) => {
+        if (!response || response.status !== 200 || response.type === "opaque") {
+          return response;
+        }
+        const copy = response.clone();
+        event.waitUntil(
+          caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined),
+        );
+        return response;
+      })
+      .catch(() => caches.match(request)),
   );
 });
