@@ -318,9 +318,19 @@ async function optimizeImageForUpload(file) {
   if (!ctx) throw new Error("Canvas unavailable");
   ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
   if (typeof bitmap.close === "function") bitmap.close();
-  const optimizedBlob = await canvasToBlob(canvas, "image/webp", 0.82);
+  const originalType = file.type || "image/jpeg";
+  const isTransparentSource = originalType === "image/png" || originalType === "image/gif" || originalType === "image/webp";
+  const outputType = isTransparentSource ? "image/png" : originalType;
+  const quality = outputType === "image/jpeg" || outputType === "image/webp" ? 0.85 : undefined;
+  const optimizedBlob = await canvasToBlob(canvas, outputType, quality);
+  const extensionMap = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+  };
   const baseName = (file.name || "image").replace(/\.[^.]+$/, "") || "image";
-  return new File([optimizedBlob], `${baseName}.webp`, { type: "image/webp" });
+  const extension = extensionMap[outputType] || (file.name.match(/\.[^.]+$/)?.[0] || ".img");
+  return new File([optimizedBlob], `${baseName}${extension}`, { type: outputType });
 }
 
 function toggleFieldVisibility(sectionVal) {
