@@ -2,6 +2,10 @@ export const COOKIE_NAME = "hugo_admin";
 const WEEK = 7 * 24 * 60 * 60;
 const encoder = new TextEncoder();
 
+function runtimeEnv() {
+  return globalThis.__CF_PAGES_ENV__ || globalThis.process?.env || {};
+}
+
 const baseHeaders = {
   "Content-Type": "application/json",
 };
@@ -37,7 +41,7 @@ export function getEnv(options = {}) {
     NEXTCLOUD_PASSWORD,
     NEXTCLOUD_FOLDER,
     NEXTCLOUD_PUBLIC_BASE_URL,
-  } = process.env;
+  } = runtimeEnv();
   if (requireAuth && (!ADMIN_PASSWORD || !JWT_SECRET)) {
     throw new Error("Missing ADMIN_PASSWORD or JWT_SECRET");
   }
@@ -148,12 +152,12 @@ export async function verifyRequest(event) {
 }
 
 export function authCookie(token) {
-  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  const secure = runtimeEnv().NODE_ENV === "production" ? " Secure;" : "";
   return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${WEEK};${secure}`;
 }
 
 export function clearCookie() {
-  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  const secure = runtimeEnv().NODE_ENV === "production" ? " Secure;" : "";
   return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0;${secure}`;
 }
 

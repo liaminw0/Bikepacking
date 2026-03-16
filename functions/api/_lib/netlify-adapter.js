@@ -1,22 +1,16 @@
-function setProcessEnv(bindings) {
-  const previousProcess = globalThis.process;
-  const previousEnv = previousProcess?.env;
-  const env = {
+function setRuntimeEnv(bindings) {
+  const previousEnv = globalThis.__CF_PAGES_ENV__;
+  globalThis.__CF_PAGES_ENV__ = {
+    NODE_ENV: "production",
     ...(previousEnv || {}),
     ...bindings,
   };
 
-  if (previousProcess) {
-    previousProcess.env = env;
-  } else {
-    globalThis.process = { env };
-  }
-
   return () => {
-    if (previousProcess) {
-      previousProcess.env = previousEnv;
+    if (typeof previousEnv === "undefined") {
+      delete globalThis.__CF_PAGES_ENV__;
     } else {
-      delete globalThis.process;
+      globalThis.__CF_PAGES_ENV__ = previousEnv;
     }
   };
 }
@@ -64,10 +58,7 @@ function toResponse(result) {
 
 export function createNetlifyOnRequest(handler) {
   return async function onRequest(context) {
-    const restoreEnv = setProcessEnv({
-      NODE_ENV: "production",
-      ...(context.env || {}),
-    });
+    const restoreEnv = setRuntimeEnv(context.env || {});
 
     try {
       const event = await createEvent(context.request);
