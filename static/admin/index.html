@@ -14,7 +14,10 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">Hugo Admin</div>
+    <div class="brand-block">
+      <div class="brand">Hugo Admin</div>
+      <div class="topbar-subtitle">Tiny-screen post editor</div>
+    </div>
     <button id="logoutBtn" class="ghost small hidden" aria-label="Logout">Logout</button>
   </header>
 
@@ -37,6 +40,7 @@
     <section id="listView" class="card hidden">
       <div class="section-heading">
         <h1>Posts</h1>
+        <p class="hint">Choose a post or start a new one.</p>
       </div>
       <div class="list-toolbar">
         <label class="inline inline--stack">
@@ -77,7 +81,6 @@
         <div class="media-gallery media-gallery--compact" id="allUploadsGallery">
           <p class="hint">Loading images...</p>
         </div>
-        <button id="loadMoreUploadsBtn" class="ghost small block hidden" type="button">Load more</button>
       </div>
     </section>
 
