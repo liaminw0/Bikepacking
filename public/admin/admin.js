@@ -256,6 +256,17 @@ function releaseEditorFocus() {
   window.setTimeout(blurActive, 60);
 }
 
+function focusEditorTopAnchor() {
+  if (!backToListBtn || typeof backToListBtn.focus !== "function") return;
+  window.requestAnimationFrame(() => {
+    try {
+      backToListBtn.focus();
+    } catch {
+      // Ignore old-browser focus quirks.
+    }
+  });
+}
+
 function showLogin() {
   currentRoute = { view: "login" };
   loginView.classList.remove("hidden");
@@ -278,6 +289,7 @@ function showEditor() {
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
   releaseEditorFocus();
+  focusEditorTopAnchor();
 }
 
 function toggleMediaModal(open) {
