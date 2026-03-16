@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Weather on Bikepacking to Istanbul</title>
+    <link>https://example.org/tags/weather/</link>
+    <description>Recent content in Weather on Bikepacking to Istanbul</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 16 Mar 2026 09:19:00 +0000</lastBuildDate>
+    <atom:link href="https://example.org/tags/weather/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>testje</title>
+      <link>https://example.org/journal/testje/</link>
+      <pubDate>Mon, 16 Mar 2026 09:19:00 +0000</pubDate>
+      <guid>https://example.org/journal/testje/</guid>
+      <description>&lt;p&gt;&lt;img src=&#34;https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/19-png.webp&#34; alt=&#34;19 png&#34;&gt;&#xA;test&lt;img src=&#34;https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/het-vliegen-van-weinig-baby-20003912.webp&#34; alt=&#34;het vliegen van weinig baby 20003912&#34;&gt;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

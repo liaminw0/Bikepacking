@@ -979,11 +979,18 @@ async function login(event) {
   try {
     await api("login", { method: "POST", body: JSON.stringify({ password }) });
     passwordInput.value = "";
+  } catch (err) {
+    if (err.message === "unauthorized") return showToast("Bad password", true);
+    showToast(err.message, true);
+    return;
+  }
+
+  try {
     await loadPosts();
     await loadMediaGallery().catch(() => {});
     await applyRoute(parseRoute());
   } catch (err) {
-    if (err.message === "unauthorized") return showToast("Bad password", true);
+    if (err.message === "unauthorized") return showToast("Session created, but follow-up auth failed", true);
     showToast(err.message, true);
   }
 }

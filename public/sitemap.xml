@@ -2,41 +2,56 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/</loc>
+    <loc>https://example.org/</loc>
+    <lastmod>2026-03-16T11:18:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/journal/</loc>
+    <lastmod>2026-03-16T11:18:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/journal/test-20/</loc>
+    <lastmod>2026-03-16T11:18:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/journal/test34/</loc>
+    <lastmod>2026-03-16T11:09:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/tags/</loc>
+    <lastmod>2026-03-16T09:19:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/journal/testje/</loc>
+    <lastmod>2026-03-16T09:19:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/tags/weather/</loc>
+    <lastmod>2026-03-16T09:19:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/photos/2026-03-16-asn/</loc>
+    <lastmod>2026-03-16T08:46:00+00:00</lastmod>
+  </url><url>
+    <loc>https://example.org/tags/maps/</loc>
     <lastmod>2025-12-28T15:42:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/journal/</loc>
+    <loc>https://example.org/tags/review/</loc>
     <lastmod>2025-12-28T15:42:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/maps/</loc>
+    <loc>https://example.org/journal/test-shrotcode/</loc>
     <lastmod>2025-12-28T15:42:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/review/</loc>
-    <lastmod>2025-12-28T15:42:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/tags/</loc>
-    <lastmod>2025-12-28T15:42:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/journal/test-shrotcode/</loc>
-    <lastmod>2025-12-28T15:42:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/photos/2025-12-28-napoleon-map/</loc>
+    <loc>https://example.org/photos/2025-12-28-napoleon-map/</loc>
     <lastmod>2025-12-28T15:27:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/journal/trail-notes/</loc>
+    <loc>https://example.org/journal/trail-notes/</loc>
     <lastmod>2025-12-24T12:07:28+01:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/journal/markdown-showcases/</loc>
+    <loc>https://example.org/journal/markdown-showcases/</loc>
     <lastmod>2025-12-24T11:02:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/photos/</loc>
+    <loc>https://example.org/photos/</loc>
     <lastmod>2024-01-01T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/journal/my-first-post/</loc>
+    <loc>https://example.org/journal/my-first-post/</loc>
     <lastmod>2020-09-03T17:27:59+07:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/about/</loc>
+    <loc>https://example.org/about/</loc>
   </url><url>
-    <loc>http://localhost:1313/categories/</loc>
+    <loc>https://example.org/categories/</loc>
   </url>
 </urlset>
