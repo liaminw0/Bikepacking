@@ -574,6 +574,11 @@ label {
   color: var(--text);
 }
 
+.EasyMDEContainer .editor-preview img {
+  max-width: 150px;
+  height: auto;
+}
+
 .modal {
   position: fixed;
   inset: 0;
