@@ -742,7 +742,6 @@ label {
   position: relative;
   width: 100%;
   min-height: 8.5rem;
-  padding-top: 108%;
   border-radius: 10px;
   overflow: hidden;
   background: var(--surface-muted);
