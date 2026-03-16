@@ -45,7 +45,14 @@ const parsePropfind = (xml, cfg) => {
       lastModified: modifiedMatch ? new Date(modifiedMatch[1]).toISOString() : null,
     });
   });
-  return items.slice(0, MAX_ITEMS);
+  return items
+    .sort((a, b) => {
+      const aTime = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+      const bTime = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+      if (aTime !== bTime) return bTime - aTime;
+      return (b.name || "").localeCompare(a.name || "");
+    })
+    .slice(0, MAX_ITEMS);
 };
 
 export async function handler(event) {
