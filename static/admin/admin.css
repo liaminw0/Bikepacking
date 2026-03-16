@@ -364,9 +364,16 @@ label {
   overflow: hidden;
   display: inline-grid;
   place-items: center;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.8rem 0.9rem;
   border: 1px dashed var(--border);
+  border-radius: 12px;
   background: var(--surface-muted);
   cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
 }
 
 .upload-multi-btn input {
