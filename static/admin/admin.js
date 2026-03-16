@@ -78,10 +78,6 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   });
 }
 
-if ("scrollRestoration" in window.history) {
-  window.history.scrollRestoration = "manual";
-}
-
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
@@ -250,15 +246,14 @@ function showToast(message, isError = false) {
   setTimeout(() => toastEl.classList.add("hidden"), 3000);
 }
 
-function scrollPageToTop() {
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-  window.requestAnimationFrame(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  });
+function releaseEditorFocus() {
+  const blurActive = () => {
+    const active = document.activeElement;
+    if (active && typeof active.blur === "function") active.blur();
+  };
+  blurActive();
+  window.requestAnimationFrame(blurActive);
+  window.setTimeout(blurActive, 60);
 }
 
 function showLogin() {
@@ -282,7 +277,7 @@ function showEditor() {
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
-  scrollPageToTop();
+  releaseEditorFocus();
 }
 
 function toggleMediaModal(open) {
@@ -1185,6 +1180,7 @@ async function init() {
     el: editorEl,
     height: "560px",
     initialEditType: "markdown",
+    autofocus: false,
     previewStyle: "tab",
     usageStatistics: false,
     toolbarItems: [
