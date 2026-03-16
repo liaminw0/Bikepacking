@@ -4,6 +4,7 @@ const loginView = document.getElementById("loginView");
 const listView = document.getElementById("listView");
 const editorView = document.getElementById("editorView");
 const postsContainer = document.getElementById("postsContainer");
+const loadAllPostsBtn = document.getElementById("loadAllPostsBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 const newPostBtn = document.getElementById("newPostBtn");
@@ -54,6 +55,7 @@ const photoPicker = document.getElementById("photoPicker");
 const captionField = document.getElementById("captionField");
 const bodyBlock = document.getElementById("bodyBlock");
 const allUploadsGallery = document.getElementById("allUploadsGallery");
+const loadMoreUploadsBtn = document.getElementById("loadMoreUploadsBtn");
 const bulkImageInput = document.getElementById("bulkImageInput");
 const bulkUploadBtn = document.getElementById("bulkUploadBtn");
 const bulkUploadProgress = document.getElementById("bulkUploadProgress");
@@ -91,6 +93,8 @@ let initialEditorState = null;
 let pendingRoute = null;
 let isRouting = false;
 let allPosts = [];
+let showAllPosts = false;
+let visibleUploadsCount = 10;
 
 const isPhotoSection = (sectionVal) => {
   const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
@@ -489,6 +493,16 @@ function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
   });
 }
 
+function renderUploadsGallery() {
+  if (!allUploadsGallery) return;
+  const visibleItems = mediaItems.slice(0, visibleUploadsCount);
+  renderMediaGallery(visibleItems, allUploadsGallery, (item) => openImagePreview(item.url, item.name));
+  if (loadMoreUploadsBtn) {
+    const shouldShow = mediaItems.length > visibleUploadsCount;
+    loadMoreUploadsBtn.classList.toggle("hidden", !shouldShow);
+  }
+}
+
 async function loadMediaGallery() {
   if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
   if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Loading images...</p>";
@@ -496,7 +510,7 @@ async function loadMediaGallery() {
     const data = await api("listImages");
     mediaItems = Array.isArray(data.items) ? data.items : [];
     renderMediaGallery(mediaItems, mediaGallery, (item) => insertImage(item.url, item.name));
-    renderMediaGallery(mediaItems, allUploadsGallery, (item) => openImagePreview(item.url, item.name));
+    renderUploadsGallery();
   } catch (err) {
     if (err.message === "unauthorized") {
       showLogin();
@@ -504,6 +518,7 @@ async function loadMediaGallery() {
     }
     if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
     if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    if (loadMoreUploadsBtn) loadMoreUploadsBtn.classList.add("hidden");
     showToast(err.message, true);
   }
 }
@@ -804,6 +819,9 @@ async function api(path, options = {}) {
 }
 
 async function loadPosts() {
+  const selected = sectionFilter?.value || selectedSection || CONTENT_DIRS[0];
+  selectedSection = selected;
+  if (sectionInput) sectionInput.value = selected;
   const data = await api("listPosts");
   if (Array.isArray(data.contentDirs) && data.contentDirs.length) {
     setSections(data.contentDirs);
@@ -812,11 +830,9 @@ async function loadPosts() {
   postsContainer.innerHTML = "";
   if (!allPosts.length) {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
+    if (loadAllPostsBtn) loadAllPostsBtn.classList.add("hidden");
     return;
   }
-  const selected = sectionFilter?.value || selectedSection || CONTENT_DIRS[0];
-  selectedSection = selected;
-  if (sectionInput) sectionInput.value = selected;
   const filteredItems = allPosts
     .filter((item) => {
       const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
@@ -830,10 +846,12 @@ async function loadPosts() {
     });
   if (!filteredItems.length) {
     postsContainer.innerHTML = "<p class='hint'>No posts in this section yet.</p>";
+    if (loadAllPostsBtn) loadAllPostsBtn.classList.add("hidden");
     renderTagSuggestions();
     return;
   }
-  filteredItems.forEach((item) => {
+  const visibleItems = showAllPosts ? filteredItems : filteredItems.slice(0, 3);
+  visibleItems.forEach((item) => {
     const row = document.createElement("button");
     row.className = "post-row";
     row.type = "button";
@@ -852,6 +870,11 @@ async function loadPosts() {
     row.addEventListener("click", () => setRoute({ view: "editor-edit", path: item.path }));
     postsContainer.appendChild(row);
   });
+  if (loadAllPostsBtn) {
+    const shouldShow = filteredItems.length > 3 && !showAllPosts;
+    loadAllPostsBtn.classList.toggle("hidden", !shouldShow);
+    if (shouldShow) loadAllPostsBtn.textContent = `Load all (${filteredItems.length})`;
+  }
   renderTagSuggestions();
 }
 
@@ -1149,12 +1172,25 @@ async function init() {
 
   logoutBtn.addEventListener("click", logout);
   refreshBtn.addEventListener("click", () => {
+    visibleUploadsCount = 10;
     loadPosts().catch(() => {});
     loadMediaGallery().catch(() => {});
   });
   newPostBtn.addEventListener("click", () => {
-    setRoute({ view: "editor-new", section: selectedSection || sectionInput?.value || CONTENT_DIRS[0] });
+    attemptRouteChange({ view: "editor-new", section: selectedSection || sectionInput?.value || CONTENT_DIRS[0] });
   });
+  if (loadAllPostsBtn) {
+    loadAllPostsBtn.addEventListener("click", () => {
+      showAllPosts = true;
+      loadPosts().catch(() => {});
+    });
+  }
+  if (loadMoreUploadsBtn) {
+    loadMoreUploadsBtn.addEventListener("click", () => {
+      visibleUploadsCount += 10;
+      renderUploadsGallery();
+    });
+  }
   backToListBtn.addEventListener("click", () => {
     attemptRouteChange({ view: "posts", section: selectedSection || sectionFilter?.value || CONTENT_DIRS[0] });
   });
@@ -1286,6 +1322,7 @@ async function init() {
   if (sectionFilter) {
     sectionFilter.addEventListener("change", () => {
       selectedSection = sectionFilter.value;
+      showAllPosts = false;
       if (sectionInput) sectionInput.value = selectedSection;
       setRoute({ view: "posts", section: selectedSection });
       loadPosts().catch(() => {});
@@ -1316,6 +1353,8 @@ async function applyRoute(route) {
       return;
     }
     if (route.view === "posts") {
+      showAllPosts = false;
+      visibleUploadsCount = 10;
       if (route.section) {
         selectedSection = route.section;
         if (sectionFilter) sectionFilter.value = selectedSection;
