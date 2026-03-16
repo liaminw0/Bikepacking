@@ -181,34 +181,39 @@
   </div>
 
   <div id="mediaModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-content media-modal">
+      <div class="modal-content media-modal">
       <div class="modal-header">
         <h2>Images</h2>
         <button id="closeMediaBtn" class="ghost small">✕</button>
       </div>
-      <div class="media-upload">
-        <div class="compact-upload-stack">
-        <label class="file-drop" id="fileDrop">
-          <input type="file" id="imageInput" accept="image/*">
-          <div class="file-drop__copy">
-            <strong>Select image</strong>
-            <p class="hint">Tap to choose or drop a file.</p>
-          </div>
-          <div class="upload-preview hidden" id="uploadPreview">
-            <img id="uploadPreviewImg" alt="Uploaded image preview">
-            <button type="button" class="ghost small" id="clearUploadBtn" aria-label="Remove selected image">✕</button>
-            <button type="button" class="ghost small" id="viewUploadBtn" aria-label="View selected image">View</button>
-          </div>
-        </label>
-        <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
+      <div class="media-upload media-upload--picker">
+        <div class="media-upload__bar">
+          <button type="button" id="toggleMediaUploadBtn" class="ghost small">Upload new image</button>
+          <p class="hint" id="uploadHint">Scroll to browse. Tap image to preview. Use the button under it to insert.</p>
         </div>
-        <div class="upload-progress hidden" id="uploadProgress">
-          <div class="upload-progress__bar" id="uploadProgressBar"></div>
-          <span class="upload-progress__label" id="uploadProgressLabel">0%</span>
+        <div class="media-upload__tools hidden" id="mediaUploadTools">
+          <div class="compact-upload-stack">
+          <label class="file-drop" id="fileDrop">
+            <input type="file" id="imageInput" accept="image/*">
+            <div class="file-drop__copy">
+              <strong>Select image</strong>
+              <p class="hint">Tap to choose or drop a file.</p>
+            </div>
+            <div class="upload-preview hidden" id="uploadPreview">
+              <img id="uploadPreviewImg" alt="Uploaded image preview">
+              <button type="button" class="ghost small" id="clearUploadBtn" aria-label="Remove selected image">✕</button>
+              <button type="button" class="ghost small" id="viewUploadBtn" aria-label="View selected image">View</button>
+            </div>
+          </label>
+          <button type="button" id="uploadImageBtn" class="primary block">Upload & insert</button>
+          </div>
+          <div class="upload-progress hidden" id="uploadProgress">
+            <div class="upload-progress__bar" id="uploadProgressBar"></div>
+            <span class="upload-progress__label" id="uploadProgressLabel">0%</span>
+          </div>
         </div>
-        <p class="hint" id="uploadHint">Images are downsized and converted to WebP before upload.</p>
       </div>
-      <div class="media-gallery media-gallery--compact" id="mediaGallery">
+      <div class="media-gallery media-gallery--picker" id="mediaGallery">
         <p class="hint">Loading images...</p>
       </div>
     </div>

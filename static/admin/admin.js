@@ -67,6 +67,8 @@ const uploadPreview = document.getElementById("uploadPreview");
 const uploadPreviewImg = document.getElementById("uploadPreviewImg");
 const clearUploadBtn = document.getElementById("clearUploadBtn");
 const viewUploadBtn = document.getElementById("viewUploadBtn");
+const toggleMediaUploadBtn = document.getElementById("toggleMediaUploadBtn");
+const mediaUploadTools = document.getElementById("mediaUploadTools");
 
 let editor;
 let currentPost = null; // { path, sha }
@@ -250,9 +252,22 @@ function showEditor() {
 
 function toggleMediaModal(open) {
   if (!mediaModal) return;
-  if (open) clearUploadSelection(); // reset preview each time the modal opens
+  if (open) {
+    clearUploadSelection();
+    toggleMediaUploadTools(false);
+    mediaGallery?.scrollTo({ top: 0, behavior: "auto" });
+  }
   mediaModal.classList.toggle("hidden", !open);
   if (open) loadMediaGallery().catch(() => {});
+}
+
+function toggleMediaUploadTools(forceOpen) {
+  if (!mediaUploadTools || !toggleMediaUploadBtn) return;
+  const nextOpen = typeof forceOpen === "boolean"
+    ? forceOpen
+    : mediaUploadTools.classList.contains("hidden");
+  mediaUploadTools.classList.toggle("hidden", !nextOpen);
+  toggleMediaUploadBtn.textContent = nextOpen ? "Hide upload" : "Upload new image";
 }
 
 function openImagePreview(url, name = "image") {
@@ -403,43 +418,68 @@ function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
     target.innerHTML = "<p class='hint'>No images in Nextcloud yet.</p>";
     return;
   }
+  const isPicker = target === mediaGallery;
   target.innerHTML = "";
   items.forEach((item) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "media-item";
+    const card = document.createElement("article");
+    card.className = `media-item${isPicker ? " media-item--picker" : ""}`;
+
+    const previewBtn = document.createElement("button");
+    previewBtn.type = "button";
+    previewBtn.className = `media-preview-trigger${isPicker ? " media-preview-trigger--picker" : ""}`;
+    previewBtn.setAttribute("aria-label", `Preview ${item.name || "image"}`);
+
     const thumbWrap = document.createElement("div");
-    thumbWrap.className = "media-thumb-wrap";
+    thumbWrap.className = `media-thumb-wrap${isPicker ? " media-thumb-wrap--picker" : ""}`;
     const img = document.createElement("img");
     img.src = item.url;
     img.alt = item.name || "Image";
     img.className = "media-thumb";
-    const viewBtn = document.createElement("button");
-    viewBtn.type = "button";
-    viewBtn.className = "media-view-btn";
-    viewBtn.textContent = "View";
-    viewBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+
+    previewBtn.addEventListener("click", () => {
       openImagePreview(item.url, item.name);
     });
+
     const meta = document.createElement("div");
-    meta.className = "media-meta";
+    meta.className = `media-meta${isPicker ? " media-meta--picker" : ""}`;
     const label = document.createElement("span");
     label.textContent = item.name || "Image";
-    const size = document.createElement("span");
-    size.textContent = item.size ? `${Math.round(item.size / 1024)}kb` : "";
-    meta.appendChild(label);
-    meta.appendChild(size);
+    const detail = document.createElement("span");
+    const modified = item.lastModified ? new Date(item.lastModified) : null;
+    const modifiedText = modified && !Number.isNaN(modified.getTime())
+      ? modified.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+      : "";
+    const sizeText = item.size ? `${Math.round(item.size / 1024)}kb` : "";
+    detail.textContent = [modifiedText, sizeText].filter(Boolean).join(" • ");
+
     thumbWrap.appendChild(img);
-    btn.appendChild(thumbWrap);
-    btn.appendChild(viewBtn);
-    btn.appendChild(meta);
-    btn.addEventListener("click", () => {
-      if (typeof onSelect === "function") onSelect(item);
-      else insertImage(item.url, item.name);
-    });
-    target.appendChild(btn);
+    previewBtn.appendChild(thumbWrap);
+    meta.appendChild(label);
+    if (detail.textContent) meta.appendChild(detail);
+
+    card.appendChild(previewBtn);
+    card.appendChild(meta);
+
+    if (isPicker) {
+      const useBtn = document.createElement("button");
+      useBtn.type = "button";
+      useBtn.className = "primary media-use-btn";
+      useBtn.textContent = photoSelectActive ? "Use For Photo" : "Use This Image";
+      useBtn.addEventListener("click", () => {
+        if (typeof onSelect === "function") onSelect(item);
+        else insertImage(item.url, item.name);
+      });
+      card.appendChild(useBtn);
+    } else {
+      const viewBtn = document.createElement("button");
+      viewBtn.type = "button";
+      viewBtn.className = "ghost small media-open-btn";
+      viewBtn.textContent = "View";
+      viewBtn.addEventListener("click", () => openImagePreview(item.url, item.name));
+      card.appendChild(viewBtn);
+    }
+
+    target.appendChild(card);
   });
 }
 
@@ -629,6 +669,7 @@ async function uploadImage() {
       if (imageInput) imageInput.value = "";
       insertImage(res.url, res.name || file.name);
       await loadMediaGallery();
+      toggleMediaUploadTools(false);
       showToast("Image uploaded");
     }
   } catch (err) {
@@ -1125,6 +1166,9 @@ async function init() {
   });
   if (mediaBtn) mediaBtn.addEventListener("click", () => toggleMediaModal(true));
   if (closeMediaBtn) closeMediaBtn.addEventListener("click", () => toggleMediaModal(false));
+  if (toggleMediaUploadBtn) {
+    toggleMediaUploadBtn.addEventListener("click", () => toggleMediaUploadTools());
+  }
   if (uploadImageBtn) uploadImageBtn.addEventListener("click", uploadImage);
   if (bulkUploadBtn) bulkUploadBtn.addEventListener("click", uploadBulkImages);
   if (clearUploadBtn) {
