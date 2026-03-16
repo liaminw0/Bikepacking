@@ -268,17 +268,45 @@ function closeImagePreview() {
   imagePreviewImg.removeAttribute("src");
 }
 
-function fileToBase64(file) {
+function loadImageElement(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result || "";
-      const base64 = typeof result === "string" ? result.split(",").pop() : "";
-      resolve(base64 || "");
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
     };
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to decode image"));
+    };
+    img.src = objectUrl;
   });
+}
+
+async function convertImageToWebpPayload(file) {
+  if (!file?.type?.startsWith("image/")) throw new Error("Images only");
+  const img = await loadImageElement(file);
+  const maxDimension = 2400;
+  const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+  const width = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
+  const height = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas unavailable");
+  ctx.drawImage(img, 0, 0, width, height);
+  const dataUrl = canvas.toDataURL("image/webp", 0.82);
+  if (!dataUrl.startsWith("data:image/webp")) {
+    throw new Error("WebP conversion unsupported in this browser");
+  }
+  const baseName = (file.name || "image").replace(/\.[^.]+$/, "") || "image";
+  return {
+    name: `${baseName}.webp`,
+    contentType: "image/webp",
+    data: dataUrl.split(",").pop() || "",
+  };
 }
 
 function toggleFieldVisibility(sectionVal) {
@@ -593,12 +621,7 @@ async function uploadImage() {
     toggleUploadProgress(true);
     setUploadProgress(5);
     if (uploadImageBtn) uploadImageBtn.disabled = true;
-    const base64 = await fileToBase64(file);
-    const payload = {
-      name: file.name,
-      contentType: file.type,
-      data: base64,
-    };
+    const payload = await convertImageToWebpPayload(file);
     const res = await uploadWithProgress(payload, (p) => setUploadProgress(Math.max(10, p)));
     setUploadProgress(100);
     if (res?.url) {
@@ -638,12 +661,7 @@ async function uploadBulkImages() {
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
       setBulkProgress(5, i + 1, files.length);
-      const base64 = await fileToBase64(file);
-      const payload = {
-        name: file.name,
-        contentType: file.type,
-        data: base64,
-      };
+      const payload = await convertImageToWebpPayload(file);
       await uploadWithProgress(payload, (p) => setBulkProgress(Math.max(10, p), i + 1, files.length));
       await loadMediaGallery().catch(() => {});
       setBulkProgress(100, i + 1, files.length);
