@@ -70,6 +70,12 @@ const viewUploadBtn = document.getElementById("viewUploadBtn");
 const toggleMediaUploadBtn = document.getElementById("toggleMediaUploadBtn");
 const mediaUploadTools = document.getElementById("mediaUploadTools");
 
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
+  });
+}
+
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];

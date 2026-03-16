@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title>Hugo Admin</title>
+  <desc>Rounded square icon for the Hugo Admin CMS.</desc>
+  <rect width="512" height="512" rx="112" fill="#005f73"/>
+  <rect x="56" y="56" width="400" height="400" rx="80" fill="#f3efe5"/>
+  <path d="M164 140h56v84h72v-84h56v232h-56v-96h-72v96h-56z" fill="#005f73"/>
+</svg>
