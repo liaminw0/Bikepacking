@@ -2,6 +2,7 @@ const CONTENT_DIRS = window.CONTENT_DIRS || [window.CONTENT_DIR || "content/jour
 const editorEl = document.getElementById("editor");
 const loginView = document.getElementById("loginView");
 const listView = document.getElementById("listView");
+const uploadsView = document.getElementById("uploadsView");
 const editorView = document.getElementById("editorView");
 const postsContainer = document.getElementById("postsContainer");
 const loadAllPostsBtn = document.getElementById("loadAllPostsBtn");
@@ -256,6 +257,7 @@ function showLogin() {
   currentRoute = { view: "login" };
   loginView.classList.remove("hidden");
   listView.classList.add("hidden");
+  uploadsView?.classList.add("hidden");
   editorView.classList.add("hidden");
   logoutBtn.classList.add("hidden");
 }
@@ -264,6 +266,7 @@ function showList() {
   currentRoute = currentRoute?.view === "posts" ? currentRoute : { view: "posts", section: selectedSection };
   loginView.classList.add("hidden");
   listView.classList.remove("hidden");
+  uploadsView?.classList.remove("hidden");
   editorView.classList.add("hidden");
   logoutBtn.classList.remove("hidden");
 }
@@ -271,6 +274,7 @@ function showList() {
 function showEditor() {
   loginView.classList.add("hidden");
   listView.classList.add("hidden");
+  uploadsView?.classList.add("hidden");
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
 }
