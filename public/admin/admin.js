@@ -165,14 +165,16 @@ function setCleanAdminUrl({ replace = true } = {}) {
 }
 
 function getEditorState() {
+  const section = sectionInput?.value || selectedSection || CONTENT_DIRS[0];
+  const photoMode = isPhotoSection(section);
   return {
     title: titleInput?.value || "",
     date: dateInput?.value || "",
     draft: !!draftInput?.checked,
     tags: tagsInput?.value || "",
     slug: slugInput?.value || "",
-    section: sectionInput?.value || selectedSection || CONTENT_DIRS[0],
-    body: editor ? editor.getMarkdown() : "",
+    section,
+    body: photoMode ? "" : (editor ? editor.getMarkdown() : ""),
     photoImage: photoImageInput?.value || "",
     photoCaption: photoCaptionInput?.value || "",
   };
@@ -246,48 +248,6 @@ function showToast(message, isError = false) {
   setTimeout(() => toastEl.classList.add("hidden"), 3000);
 }
 
-function releaseEditorFocus() {
-  const blurActive = () => {
-    const active = document.activeElement;
-    if (active && typeof active.blur === "function") active.blur();
-  };
-  blurActive();
-  window.requestAnimationFrame(blurActive);
-  window.setTimeout(blurActive, 60);
-}
-
-function stabilizeEditorViewportTop() {
-  const anchor = backToListBtn || editorView;
-  const moveTop = () => {
-    releaseEditorFocus();
-    if (anchor && typeof anchor.scrollIntoView === "function") {
-      try {
-        anchor.scrollIntoView(true);
-      } catch {
-        anchor.scrollIntoView();
-      }
-    }
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    if (anchor && typeof anchor.focus === "function") {
-      try {
-        anchor.focus({ preventScroll: true });
-      } catch {
-        try {
-          anchor.focus();
-        } catch {
-          // Ignore focus failures on older browsers.
-        }
-      }
-    }
-  };
-  moveTop();
-  window.requestAnimationFrame(moveTop);
-  window.setTimeout(moveTop, 90);
-  window.setTimeout(moveTop, 220);
-}
-
 function showLogin() {
   currentRoute = { view: "login" };
   loginView.classList.remove("hidden");
@@ -309,7 +269,6 @@ function showEditor() {
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
-  stabilizeEditorViewportTop();
 }
 
 function toggleMediaModal(open) {
@@ -575,7 +534,7 @@ async function loadMediaGallery() {
   }
 }
 
-function insertImage(url, name = "image") {
+async function insertImage(url, name = "image") {
   if (photoSelectActive) {
     setPhotoImage(url, name);
     photoSelectActive = false;
@@ -583,12 +542,16 @@ function insertImage(url, name = "image") {
     showToast("Image selected for photo");
     return;
   }
-  if (!editor) return;
-  const alt = (name || "image").replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
-  const snippet = `![${alt}](${url})`;
-  editor.insertText(snippet + "\n");
-  toggleMediaModal(false);
-  showToast("Image inserted");
+  try {
+    const editorInstance = editor || await ensureEditorReady();
+    const alt = (name || "image").replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+    const snippet = `![${alt}](${url})`;
+    editorInstance.insertText(snippet + "\n");
+    toggleMediaModal(false);
+    showToast("Image inserted");
+  } catch (err) {
+    showToast(err.message || "Unable to insert image", true);
+  }
 }
 
 function toggleUploadProgress(show) {
@@ -948,10 +911,14 @@ async function openPost(path) {
     if (photoMode && fm.image) setPhotoImage(fm.image, fm.image);
     else clearPhotoImage();
     toggleFieldVisibility(section);
-    if (!photoMode) editor.setMarkdown(body || "");
-    else editor.setMarkdown(body || "");
     deletePostBtn.classList.remove("hidden");
     showEditor();
+    if (!photoMode) {
+      const editorInstance = await ensureEditorReady();
+      editorInstance.setMarkdown(body || "");
+    } else if (editor) {
+      editor.setMarkdown(body || "");
+    }
     currentRoute = { view: "editor-edit", path: data.path };
     markEditorClean();
   } catch (err) {
@@ -963,23 +930,30 @@ async function openPost(path) {
   }
 }
 
-function newPost() {
+async function newPost() {
   currentPost = null;
   titleInput.value = "";
   dateInput.value = formatDateInput(new Date());
   draftInput.checked = false;
   setTags([]);
   if (slugInput) slugInput.value = "";
-  editor.setMarkdown("");
   photoImageInput && (photoImageInput.value = "");
   photoCaptionInput && (photoCaptionInput.value = "");
   clearPhotoImage();
-  toggleFieldVisibility(sectionInput?.value || selectedSection);
   if (sectionInput && selectedSection) {
     sectionInput.value = selectedSection;
   }
+  const section = sectionInput?.value || selectedSection || CONTENT_DIRS[0];
+  const photoMode = isPhotoSection(section);
+  toggleFieldVisibility(section);
   deletePostBtn.classList.add("hidden");
   showEditor();
+  if (!photoMode) {
+    const editorInstance = await ensureEditorReady();
+    editorInstance.setMarkdown("");
+  } else if (editor) {
+    editor.setMarkdown("");
+  }
   currentRoute = { view: "editor-new", section: sectionInput?.value || selectedSection || CONTENT_DIRS[0] };
   markEditorClean();
 }
@@ -992,27 +966,28 @@ async function savePost(options = {}) {
   const date = new Date(dateInput.value || new Date());
   const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
   const photoMode = isPhotoSection(chosenDir);
-  const body = photoMode ? "" : editor.getMarkdown();
-  const tags = parseTags(tagsInput.value);
-  const fm = buildFrontMatter({
-    title,
-    date: date.toISOString(),
-    draft: draftInput.checked,
-    tags,
-    slug,
-    image: photoImageInput?.value.trim(),
-    caption: photoCaptionInput?.value.trim(),
-  }, photoMode);
-  const content = `${fm}${body}`;
-  const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
-  const path = currentPost?.path || `${chosenDir}/${filename}`;
-  const payload = {
-    path,
-    content,
-    message: currentPost ? `Update ${title}` : `Create ${title}`,
-    sha: currentPost?.sha,
-  };
   try {
+    const editorInstance = photoMode ? editor : await ensureEditorReady();
+    const body = photoMode ? "" : editorInstance.getMarkdown();
+    const tags = parseTags(tagsInput.value);
+    const fm = buildFrontMatter({
+      title,
+      date: date.toISOString(),
+      draft: draftInput.checked,
+      tags,
+      slug,
+      image: photoImageInput?.value.trim(),
+      caption: photoCaptionInput?.value.trim(),
+    }, photoMode);
+    const content = `${fm}${body}`;
+    const filename = `${date.toISOString().slice(0, 10)}-${slug}.md`;
+    const path = currentPost?.path || `${chosenDir}/${filename}`;
+    const payload = {
+      path,
+      content,
+      message: currentPost ? `Update ${title}` : `Create ${title}`,
+      sha: currentPost?.sha,
+    };
     const res = await api("savePost", { method: "POST", body: JSON.stringify(payload) });
     currentPost = { path: res.path || path, sha: res.sha };
     if (!currentPost.path) currentPost.path = path;
@@ -1149,7 +1124,7 @@ function applyTemplate(template, values) {
   return template.replace(/\$\{(.*?)\}/g, (_, key) => values[key] ?? "");
 }
 
-function insertShortcode() {
+async function insertShortcode() {
   const sc = shortcodes.find((s) => s.name === shortcodeSelect.value);
   if (!sc) return;
   const values = {};
@@ -1157,8 +1132,13 @@ function insertShortcode() {
     values[el.dataset.key] = el.value || "";
   });
   const snippet = applyTemplate(sc.template, values);
-  editor.insertText(snippet);
-  toggleShortcodeModal(false);
+  try {
+    const editorInstance = editor || await ensureEditorReady();
+    editorInstance.insertText(snippet);
+    toggleShortcodeModal(false);
+  } catch (err) {
+    showToast(err.message || "Unable to insert shortcode", true);
+  }
 }
 
 async function loadShortcodes() {
@@ -1200,17 +1180,12 @@ async function ensureToastUI() {
   if (!window.toastui?.Editor) throw new Error("Toast UI editor failed to load");
 }
 
-async function init() {
+async function ensureEditorReady() {
+  if (editor) return editor;
   await ensureToastUI();
-  const setEditorHeight = () => {
-    editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
-    if (editor && typeof editor.setHeight === "function") {
-      editor.setHeight(editorInstanceHeight + "px");
-    }
-  };
   editor = new toastui.Editor({
     el: editorEl,
-    height: "560px",
+    height: editorInstanceHeight + "px",
     initialEditType: "markdown",
     autofocus: false,
     previewStyle: "tab",
@@ -1222,6 +1197,16 @@ async function init() {
       ["table", "image", "link", "code", "codeblock"],
     ],
   });
+  return editor;
+}
+
+async function init() {
+  const setEditorHeight = () => {
+    editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
+    if (editor && typeof editor.setHeight === "function") {
+      editor.setHeight(editorInstanceHeight + "px");
+    }
+  };
 
   logoutBtn.addEventListener("click", logout);
   refreshBtn.addEventListener("click", () => {
@@ -1384,9 +1369,13 @@ async function init() {
 
   if (sectionInput) {
     sectionInput.addEventListener("change", () => {
-      toggleFieldVisibility(sectionInput.value);
+      const section = sectionInput.value;
+      toggleFieldVisibility(section);
+      if (!isPhotoSection(section) && currentRoute?.view?.startsWith("editor")) {
+        ensureEditorReady().catch((err) => showToast(err.message, true));
+      }
       if (currentRoute?.view === "editor-new") {
-        currentRoute = { view: "editor-new", section: sectionInput.value };
+        currentRoute = { view: "editor-new", section };
         setRoute(currentRoute, { replace: true });
       }
     });
@@ -1431,7 +1420,7 @@ async function applyRoute(route) {
         if (sectionFilter) sectionFilter.value = selectedSection;
       }
       setRoute({ view: "editor-new", section: selectedSection }, { replace: true });
-      newPost();
+      await newPost();
       return;
     }
     currentRoute = { view: "posts", section: selectedSection };
