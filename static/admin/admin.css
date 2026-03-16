@@ -163,14 +163,10 @@ label {
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.55rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
   margin-bottom: 0.65rem;
-}
-
-.brand-block {
-  display: grid;
-  gap: 0.15rem;
 }
 
 .brand {
@@ -179,9 +175,9 @@ label {
   letter-spacing: 0.01em;
 }
 
-.topbar-subtitle {
-  color: var(--muted);
-  font-size: 0.76rem;
+#logoutBtn {
+  width: auto;
+  justify-self: end;
 }
 
 #logoutBtn.hidden {
@@ -898,11 +894,6 @@ label {
   body {
     max-width: 32rem;
     margin: 0 auto;
-  }
-
-  .topbar {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
   }
 
   .actions,
