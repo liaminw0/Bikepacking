@@ -1,6 +1,7 @@
 import { basicAuthHeader, getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.js";
 
 const MAX_ITEMS = 200;
+const DEFAULT_LIMIT = 10;
 
 const basicAuthHeaders = (cfg) => ({
   Authorization: basicAuthHeader(cfg.username, cfg.password),
@@ -45,20 +46,22 @@ const parsePropfind = (xml, cfg) => {
       lastModified: modifiedMatch ? new Date(modifiedMatch[1]).toISOString() : null,
     });
   });
-  return items
-    .sort((a, b) => {
-      const aTime = a.lastModified ? new Date(a.lastModified).getTime() : 0;
-      const bTime = b.lastModified ? new Date(b.lastModified).getTime() : 0;
-      if (aTime !== bTime) return bTime - aTime;
-      return (b.name || "").localeCompare(a.name || "");
-    })
-    .slice(0, MAX_ITEMS);
+  return items.sort((a, b) => {
+    const aTime = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+    const bTime = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+    if (aTime !== bTime) return bTime - aTime;
+    return (b.name || "").localeCompare(a.name || "");
+  });
 };
 
 export async function handler(event) {
   const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   if (event.httpMethod !== "GET") return jsonResponse(405, { error: "Method not allowed" });
+  const rawOffset = Number.parseInt(event.queryStringParameters?.offset || "0", 10);
+  const rawLimit = Number.parseInt(event.queryStringParameters?.limit || `${DEFAULT_LIMIT}`, 10);
+  const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
+  const limit = Number.isFinite(rawLimit) ? Math.min(MAX_ITEMS, Math.max(1, rawLimit)) : DEFAULT_LIMIT;
   let cfg;
   try {
     cfg = getNextcloudConfig();
@@ -81,8 +84,15 @@ export async function handler(event) {
       const status = res.status === 401 ? 502 : 500;
       return jsonResponse(status, { error: "Failed to load images" });
     }
-    const items = parsePropfind(body, cfg);
-    return jsonResponse(200, { items });
+    const items = parsePropfind(body, cfg).slice(0, MAX_ITEMS);
+    const pagedItems = items.slice(offset, offset + limit);
+    return jsonResponse(200, {
+      items: pagedItems,
+      total: items.length,
+      offset,
+      limit,
+      hasMore: offset + pagedItems.length < items.length,
+    });
   } catch (err) {
     console.error(err);
     return jsonResponse(500, { error: "Failed to list images" });

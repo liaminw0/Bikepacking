@@ -45,6 +45,7 @@ const cancelExitBtn = document.getElementById("cancelExitBtn");
 const imageInput = document.getElementById("imageInput");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const mediaGallery = document.getElementById("mediaGallery");
+const loadMoreMediaBtn = document.getElementById("loadMoreMediaBtn");
 const photoImageInput = document.getElementById("photoImageInput");
 const photoCaptionInput = document.getElementById("photoCaptionInput");
 const photoImagePreview = document.getElementById("photoImagePreview");
@@ -89,7 +90,9 @@ let currentPost = null; // { path, sha }
 let shortcodes = [];
 let selectedSection = CONTENT_DIRS[0];
 let editorInstanceHeight = 560;
-let mediaItems = [];
+let pickerMediaItems = [];
+let uploadsMediaItems = [];
+let totalMediaItems = 0;
 let currentPreviewUrl = null;
 let currentPreviewName = "image";
 let photoSelectActive = false;
@@ -99,8 +102,9 @@ let initialEditorState = null;
 let pendingRoute = null;
 let isRouting = false;
 let allPosts = [];
-let showAllPosts = false;
-let visibleUploadsCount = 10;
+let visiblePostsCount = 3;
+const MEDIA_PAGE_SIZE = 10;
+const POSTS_PAGE_SIZE = 5;
 
 const isPhotoSection = (sectionVal) => {
   const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
@@ -298,9 +302,10 @@ function toggleMediaModal(open) {
     clearUploadSelection();
     toggleMediaUploadTools(false);
     mediaGallery?.scrollTo({ top: 0, behavior: "auto" });
+    loadMoreMediaBtn?.classList.add("hidden");
   }
   mediaModal.classList.toggle("hidden", !open);
-  if (open) loadMediaGallery().catch(() => {});
+  if (open) loadPickerGallery({ reset: true }).catch(() => {});
 }
 
 function toggleMediaUploadTools(forceOpen) {
@@ -527,32 +532,81 @@ function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
 
 function renderUploadsGallery() {
   if (!allUploadsGallery) return;
-  const visibleItems = mediaItems.slice(0, visibleUploadsCount);
-  renderMediaGallery(visibleItems, allUploadsGallery, (item) => openImagePreview(item.url, item.name));
+  renderMediaGallery(uploadsMediaItems, allUploadsGallery, (item) => openImagePreview(item.url, item.name));
   if (loadMoreUploadsBtn) {
-    const shouldShow = mediaItems.length > visibleUploadsCount;
+    const shouldShow = uploadsMediaItems.length < totalMediaItems;
     loadMoreUploadsBtn.classList.toggle("hidden", !shouldShow);
   }
 }
 
-async function loadMediaGallery() {
-  if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
-  if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+function renderPickerGallery() {
+  if (!mediaGallery) return;
+  renderMediaGallery(pickerMediaItems, mediaGallery, (item) => insertImage(item.url, item.name));
+  if (loadMoreMediaBtn) {
+    const shouldShow = pickerMediaItems.length < totalMediaItems;
+    loadMoreMediaBtn.classList.toggle("hidden", !shouldShow);
+  }
+}
+
+async function fetchImagePage(offset, limit = MEDIA_PAGE_SIZE) {
+  const params = new URLSearchParams({
+    offset: String(offset),
+    limit: String(limit),
+  });
+  return api(`listImages?${params.toString()}`);
+}
+
+async function loadPickerGallery({ reset = false } = {}) {
+  if (reset) {
+    pickerMediaItems = [];
+    if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+    if (loadMoreMediaBtn) loadMoreMediaBtn.classList.add("hidden");
+  }
   try {
-    const data = await api("listImages");
-    mediaItems = Array.isArray(data.items) ? data.items : [];
-    renderMediaGallery(mediaItems, mediaGallery, (item) => insertImage(item.url, item.name));
-    renderUploadsGallery();
+    const data = await fetchImagePage(reset ? 0 : pickerMediaItems.length);
+    totalMediaItems = Number.isFinite(data.total) ? data.total : totalMediaItems;
+    const items = Array.isArray(data.items) ? data.items : [];
+    pickerMediaItems = reset ? items : [...pickerMediaItems, ...items];
+    renderPickerGallery();
   } catch (err) {
     if (err.message === "unauthorized") {
       showLogin();
       return;
     }
     if (mediaGallery) mediaGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
+    if (loadMoreMediaBtn) loadMoreMediaBtn.classList.add("hidden");
+    showToast(err.message, true);
+  }
+}
+
+async function loadUploadsGallery({ reset = false } = {}) {
+  if (reset) {
+    uploadsMediaItems = [];
+    if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Loading images...</p>";
+    if (loadMoreUploadsBtn) loadMoreUploadsBtn.classList.add("hidden");
+  }
+  try {
+    const data = await fetchImagePage(reset ? 0 : uploadsMediaItems.length);
+    totalMediaItems = Number.isFinite(data.total) ? data.total : totalMediaItems;
+    const items = Array.isArray(data.items) ? data.items : [];
+    uploadsMediaItems = reset ? items : [...uploadsMediaItems, ...items];
+    renderUploadsGallery();
+  } catch (err) {
+    if (err.message === "unauthorized") {
+      showLogin();
+      return;
+    }
     if (allUploadsGallery) allUploadsGallery.innerHTML = "<p class='hint'>Unable to load images.</p>";
     if (loadMoreUploadsBtn) loadMoreUploadsBtn.classList.add("hidden");
     showToast(err.message, true);
   }
+}
+
+async function loadMediaGallery() {
+  await Promise.all([
+    loadPickerGallery({ reset: true }),
+    loadUploadsGallery({ reset: true }),
+  ]);
 }
 
 async function insertImage(url, name = "image") {
@@ -886,7 +940,7 @@ async function loadPosts() {
     renderTagSuggestions();
     return;
   }
-  const visibleItems = showAllPosts ? filteredItems : filteredItems.slice(0, 3);
+  const visibleItems = filteredItems.slice(0, visiblePostsCount);
   visibleItems.forEach((item) => {
     const row = document.createElement("button");
     row.className = "post-row";
@@ -907,9 +961,12 @@ async function loadPosts() {
     postsContainer.appendChild(row);
   });
   if (loadAllPostsBtn) {
-    const shouldShow = filteredItems.length > 3 && !showAllPosts;
+    const shouldShow = filteredItems.length > visiblePostsCount;
     loadAllPostsBtn.classList.toggle("hidden", !shouldShow);
-    if (shouldShow) loadAllPostsBtn.textContent = `Load all (${filteredItems.length})`;
+    if (shouldShow) {
+      const remaining = filteredItems.length - visiblePostsCount;
+      loadAllPostsBtn.textContent = `Load 5 more (${remaining} left)`;
+    }
   }
   renderTagSuggestions();
 }
@@ -1064,7 +1121,7 @@ async function login(event) {
 
   try {
     await loadPosts();
-    await loadMediaGallery().catch(() => {});
+    await loadUploadsGallery({ reset: true }).catch(() => {});
     await applyRoute(parseRoute());
   } catch (err) {
     if (err.message === "unauthorized") return showToast("Session created, but follow-up auth failed", true);
@@ -1365,23 +1422,26 @@ async function init() {
 
   logoutBtn.addEventListener("click", logout);
   refreshBtn.addEventListener("click", () => {
-    visibleUploadsCount = 10;
     loadPosts().catch(() => {});
-    loadMediaGallery().catch(() => {});
+    loadUploadsGallery({ reset: true }).catch(() => {});
   });
   newPostBtn.addEventListener("click", () => {
     attemptRouteChange({ view: "editor-new", section: selectedSection || sectionInput?.value || CONTENT_DIRS[0] });
   });
   if (loadAllPostsBtn) {
     loadAllPostsBtn.addEventListener("click", () => {
-      showAllPosts = true;
+      visiblePostsCount += POSTS_PAGE_SIZE;
       loadPosts().catch(() => {});
     });
   }
   if (loadMoreUploadsBtn) {
     loadMoreUploadsBtn.addEventListener("click", () => {
-      visibleUploadsCount += 10;
-      renderUploadsGallery();
+      loadUploadsGallery().catch(() => {});
+    });
+  }
+  if (loadMoreMediaBtn) {
+    loadMoreMediaBtn.addEventListener("click", () => {
+      loadPickerGallery().catch(() => {});
     });
   }
   backToListBtn.addEventListener("click", () => {
@@ -1505,7 +1565,7 @@ async function init() {
   });
 
   loadPosts()
-    .then(() => loadMediaGallery())
+    .then(() => loadUploadsGallery({ reset: true }))
     .then(() => applyRoute(parseRoute()))
     .catch((err) => {
       if (err.message === "unauthorized") showLogin();
@@ -1518,7 +1578,7 @@ async function init() {
   if (sectionFilter) {
     sectionFilter.addEventListener("change", () => {
       selectedSection = sectionFilter.value;
-      showAllPosts = false;
+      visiblePostsCount = 3;
       if (sectionInput) sectionInput.value = selectedSection;
       setRoute({ view: "posts", section: selectedSection });
       loadPosts().catch(() => {});
@@ -1553,8 +1613,7 @@ async function applyRoute(route) {
       return;
     }
     if (route.view === "posts") {
-      showAllPosts = false;
-      visibleUploadsCount = 10;
+      visiblePostsCount = 3;
       if (route.section) {
         selectedSection = route.section;
         if (sectionFilter) sectionFilter.value = selectedSection;
@@ -1563,6 +1622,7 @@ async function applyRoute(route) {
       currentRoute = { view: "posts", section: selectedSection };
       setCleanAdminUrl({ replace: true });
       await loadPosts();
+      await loadUploadsGallery({ reset: true });
       showList();
       return;
     }
