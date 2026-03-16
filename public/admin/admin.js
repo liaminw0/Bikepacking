@@ -78,6 +78,10 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   });
 }
 
+const EASYMDE_CSS_URL = "https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css";
+const EASYMDE_JS_URL = "https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js";
+const FONT_AWESOME_CSS_URL = "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css";
+
 let editor;
 let currentPost = null; // { path, sha }
 let shortcodes = [];
@@ -1158,45 +1162,113 @@ async function loadShortcodes() {
   }
 }
 
-async function ensureToastUI() {
-  // Prefer local bundled assets to avoid CDN/MIME/blocked issues.
-  loadCss("toastui-editor.min.css");
-  if (!window.toastui?.Editor) {
-    try {
-      await loadScript("toastui-editor-all.min.js");
-    } catch (e) {
-      console.warn("Local Toast UI load failed", e);
-    }
+function blurEditorInput(target) {
+  try {
+    const input = target?.codemirror?.getInputField?.() || target;
+    if (input && typeof input.blur === "function") input.blur();
+  } catch {
+    // Ignore blur failures on older browsers.
   }
-  // Final fallback: attempt CDN if local not available.
-  if (!window.toastui?.Editor) {
-    loadCss("https://uicdn.toast.com/editor/latest/toastui-editor.min.css");
-    try {
-      await loadScript("https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js");
-    } catch (e) {
-      console.warn("Primary Toast UI CDN failed", e);
-    }
-  }
-  if (!window.toastui?.Editor) throw new Error("Toast UI editor failed to load");
+}
+
+function createTextareaEditor() {
+  editorEl.classList.add("markdown-editor-input");
+  return {
+    setMarkdown(value) {
+      editorEl.value = value || "";
+      blurEditorInput(editorEl);
+    },
+    getMarkdown() {
+      return editorEl.value || "";
+    },
+    insertText(snippet) {
+      const start = editorEl.selectionStart ?? editorEl.value.length;
+      const end = editorEl.selectionEnd ?? editorEl.value.length;
+      editorEl.value = `${editorEl.value.slice(0, start)}${snippet}${editorEl.value.slice(end)}`;
+      const cursor = start + snippet.length;
+      if (typeof editorEl.setSelectionRange === "function") {
+        editorEl.setSelectionRange(cursor, cursor);
+      }
+      editorEl.focus();
+    },
+    setHeight(height) {
+      const cssHeight = typeof height === "number" ? `${height}px` : height;
+      editorEl.style.height = cssHeight;
+      editorEl.style.minHeight = cssHeight;
+    },
+  };
+}
+
+function createEasyMDEEditor(instance) {
+  window.requestAnimationFrame(() => blurEditorInput(instance));
+  window.setTimeout(() => blurEditorInput(instance), 60);
+  return {
+    setMarkdown(value) {
+      instance.value(value || "");
+      blurEditorInput(instance);
+    },
+    getMarkdown() {
+      return instance.value();
+    },
+    insertText(snippet) {
+      const cm = instance.codemirror;
+      if (cm?.replaceSelection) {
+        cm.replaceSelection(snippet);
+        cm.focus();
+        return;
+      }
+      instance.value(`${instance.value()}${snippet}`);
+    },
+    setHeight(height) {
+      const cssHeight = typeof height === "number" ? `${height}px` : height;
+      if (instance.codemirror?.setSize) {
+        instance.codemirror.setSize(null, cssHeight);
+      }
+    },
+  };
+}
+
+async function ensureEasyMDE() {
+  loadCss(FONT_AWESOME_CSS_URL);
+  loadCss(EASYMDE_CSS_URL);
+  if (window.EasyMDE) return window.EasyMDE;
+  await loadScript(EASYMDE_JS_URL);
+  if (!window.EasyMDE) throw new Error("EasyMDE failed to load");
+  return window.EasyMDE;
 }
 
 async function ensureEditorReady() {
   if (editor) return editor;
-  await ensureToastUI();
-  editor = new toastui.Editor({
-    el: editorEl,
-    height: editorInstanceHeight + "px",
-    initialEditType: "markdown",
-    autofocus: false,
-    previewStyle: "tab",
-    usageStatistics: false,
-    toolbarItems: [
-      ["heading", "bold", "italic", "strike"],
-      ["hr", "quote"],
-      ["ul", "ol", "task", "indent", "outdent"],
-      ["table", "image", "link", "code", "codeblock"],
-    ],
-  });
+  try {
+    const EasyMDE = await ensureEasyMDE();
+    const instance = new EasyMDE({
+      element: editorEl,
+      autofocus: false,
+      autoDownloadFontAwesome: false,
+      forceSync: true,
+      spellChecker: false,
+      status: false,
+      minHeight: `${editorInstanceHeight}px`,
+      toolbar: [
+        "bold",
+        "italic",
+        "heading",
+        "|",
+        "quote",
+        "unordered-list",
+        "ordered-list",
+        "|",
+        "link",
+        "code",
+        "preview",
+      ],
+    });
+    editor = createEasyMDEEditor(instance);
+  } catch (err) {
+    console.warn("EasyMDE unavailable, falling back to textarea", err);
+    editor = createTextareaEditor();
+  }
+  editor.setHeight(editorInstanceHeight);
   return editor;
 }
 
@@ -1204,7 +1276,7 @@ async function init() {
   const setEditorHeight = () => {
     editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
     if (editor && typeof editor.setHeight === "function") {
-      editor.setHeight(editorInstanceHeight + "px");
+      editor.setHeight(editorInstanceHeight);
     }
   };
 

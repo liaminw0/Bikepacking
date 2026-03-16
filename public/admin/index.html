@@ -9,7 +9,6 @@
   <title>Hugo Mobile Admin</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="toastui-editor.min.css">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -40,7 +39,6 @@
       </div>
       <div class="list-toolbar">
         <label class="inline inline--stack">
-          <span>Section</span>
           <select id="sectionFilter"></select>
         </label>
         <div class="actions actions--stack">
@@ -60,7 +58,6 @@
         <div class="block-heading">
           <div>
             <h2>Uploads</h2>
-            <span class="hint">Browse or add images</span>
           </div>
         </div>
         <div class="compact-upload-stack">
@@ -160,7 +157,7 @@
               <button type="button" id="shortcodeBtn" class="ghost small">+ Shortcode</button>
             </div>
           </div>
-          <div id="editor"></div>
+          <textarea id="editor" class="markdown-editor-input" rows="14" spellcheck="false" placeholder="Write in Markdown"></textarea>
         </div>
       </form>
     </section>
@@ -251,7 +248,6 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script src="toastui-editor-all.min.js"></script>
   <script type="module" src="admin.js"></script>
 </body>
 </html>

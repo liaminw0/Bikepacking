@@ -1,11 +1,9 @@
-const SHELL_CACHE = "admin-shell-v2";
+const SHELL_CACHE = "admin-shell-v3";
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./admin.css",
   "./admin.js",
-  "./toastui-editor.min.css",
-  "./toastui-editor-all.min.js",
   "./shortcodes.json",
   "./manifest.webmanifest",
   "./icon.svg",

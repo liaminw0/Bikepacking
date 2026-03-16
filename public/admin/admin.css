@@ -442,79 +442,110 @@ label {
 
 #editorView,
 #editor,
-.toastui-editor-defaultUI,
-.toastui-editor-main-container,
-.toastui-editor-main,
-.toastui-editor-md-container,
-.toastui-editor-ww-container {
+.markdown-editor-input,
+.EasyMDEContainer,
+.EasyMDEContainer .CodeMirror,
+.EasyMDEContainer .editor-toolbar,
+.EasyMDEContainer .editor-statusbar,
+.EasyMDEContainer .editor-preview {
   width: 100%;
   max-width: 100%;
   min-width: 0;
 }
 
-.toastui-editor-defaultUI {
+#editor,
+.markdown-editor-input {
+  min-height: 18rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+}
+
+.EasyMDEContainer {
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
   background: var(--surface);
 }
 
-.toastui-editor-defaultUI-toolbar,
-.toastui-editor-md-tab-container,
-.toastui-editor-defaultUI .toastui-editor-toolbar,
-.toastui-editor-toolbar-group,
-.toastui-editor-mode-switch,
-.toastui-editor-mode-switch .tab-item,
-.toastui-editor-md-tab-container .toastui-editor-tabs,
-.toastui-editor-md-tab-container .tab-item {
-  min-width: 0;
-}
-
-.toastui-editor-defaultUI-toolbar,
-.toastui-editor-md-tab-container {
-  padding: 0 0.35rem !important;
-  height: auto !important;
-  flex-wrap: wrap;
-}
-
-.toastui-editor-defaultUI .toastui-editor-toolbar,
-.toastui-editor-toolbar-group {
-  height: auto;
-  flex-wrap: wrap;
-}
-
-.toastui-editor-defaultUI-toolbar button,
-.toastui-editor-toolbar-item-wrapper {
-  margin: 0.22rem;
-}
-
-.toastui-editor-md-tab-container {
-  float: none !important;
-  width: 100%;
-}
-
-.toastui-editor-md-tab-container .toastui-editor-tabs,
-.toastui-editor-mode-switch {
+.EasyMDEContainer .editor-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin: 0;
-  padding: 0.4rem 0;
-  height: auto;
+  gap: 0.22rem;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  padding: 0.35rem;
 }
 
-.toastui-editor-md-tab-container .tab-item,
-.toastui-editor-mode-switch .tab-item {
-  width: auto;
-  flex: 1 1 0;
-  margin: 0;
+.EasyMDEContainer .editor-toolbar::before,
+.EasyMDEContainer .editor-toolbar::after {
+  display: none;
 }
 
-.toastui-editor-md-container .toastui-editor-md-preview,
-.toastui-editor-ww-container .toastui-editor-contents,
-.toastui-editor-defaultUI .ProseMirror {
+.EasyMDEContainer .editor-toolbar a,
+.EasyMDEContainer .editor-toolbar button {
+  width: 2rem;
+  height: 2rem;
+  min-width: 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.EasyMDEContainer .editor-toolbar a:hover,
+.EasyMDEContainer .editor-toolbar a.active,
+.EasyMDEContainer .editor-toolbar button:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.EasyMDEContainer .editor-toolbar i.separator {
+  width: 1px;
+  height: 1.5rem;
+  margin: 0 0.2rem;
+  background: var(--border);
+}
+
+.EasyMDEContainer .CodeMirror {
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  min-height: 18rem;
+}
+
+.EasyMDEContainer .CodeMirror-scroll {
+  min-height: 18rem;
+}
+
+.EasyMDEContainer .CodeMirror-lines,
+.EasyMDEContainer .editor-preview {
   padding-left: 0.8rem;
   padding-right: 0.8rem;
+}
+
+.EasyMDEContainer .CodeMirror-cursor {
+  border-color: var(--text);
+}
+
+.EasyMDEContainer .editor-statusbar {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 0.35rem 0.6rem;
+}
+
+.EasyMDEContainer .editor-preview {
+  background: var(--surface);
+  color: var(--text);
 }
 
 .modal {
@@ -843,11 +874,6 @@ label {
   color: var(--text);
   box-shadow: var(--shadow);
   z-index: 30;
-}
-
-.toastui-editor-popup {
-  max-width: calc(100vw - 1rem);
-  width: calc(100vw - 1rem);
 }
 
 @media (max-width: 360px) {
