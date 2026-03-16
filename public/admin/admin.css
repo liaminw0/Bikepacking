@@ -680,9 +680,9 @@ label {
 .media-item {
   position: relative;
   display: grid;
-  grid-template-columns: 4rem minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 0.55rem;
-  align-items: center;
+  align-items: start;
   padding: 0.45rem;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -694,7 +694,7 @@ label {
 .media-thumb-wrap {
   position: relative;
   width: 100%;
-  padding-top: 100%;
+  padding-top: 72%;
   border-radius: 10px;
   overflow: hidden;
   background: var(--surface-muted);
@@ -711,7 +711,7 @@ label {
 .media-meta {
   display: grid;
   gap: 0.15rem;
-  padding-right: 2.8rem;
+  padding-right: 0;
   color: var(--muted);
   font-size: 0.72rem;
 }
