@@ -256,15 +256,36 @@ function releaseEditorFocus() {
   window.setTimeout(blurActive, 60);
 }
 
-function focusEditorTopAnchor() {
-  if (!backToListBtn || typeof backToListBtn.focus !== "function") return;
-  window.requestAnimationFrame(() => {
-    try {
-      backToListBtn.focus();
-    } catch {
-      // Ignore old-browser focus quirks.
+function stabilizeEditorViewportTop() {
+  const anchor = backToListBtn || editorView;
+  const moveTop = () => {
+    releaseEditorFocus();
+    if (anchor && typeof anchor.scrollIntoView === "function") {
+      try {
+        anchor.scrollIntoView(true);
+      } catch {
+        anchor.scrollIntoView();
+      }
     }
-  });
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    if (anchor && typeof anchor.focus === "function") {
+      try {
+        anchor.focus({ preventScroll: true });
+      } catch {
+        try {
+          anchor.focus();
+        } catch {
+          // Ignore focus failures on older browsers.
+        }
+      }
+    }
+  };
+  moveTop();
+  window.requestAnimationFrame(moveTop);
+  window.setTimeout(moveTop, 90);
+  window.setTimeout(moveTop, 220);
 }
 
 function showLogin() {
@@ -288,8 +309,7 @@ function showEditor() {
   listView.classList.add("hidden");
   editorView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
-  releaseEditorFocus();
-  focusEditorTopAnchor();
+  stabilizeEditorViewportTop();
 }
 
 function toggleMediaModal(open) {
