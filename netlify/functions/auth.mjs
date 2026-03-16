@@ -42,11 +42,18 @@ export function getEnv(options = {}) {
     NEXTCLOUD_FOLDER,
     NEXTCLOUD_PUBLIC_BASE_URL,
   } = runtimeEnv();
-  if (requireAuth && (!ADMIN_PASSWORD || !JWT_SECRET)) {
-    throw new Error("Missing ADMIN_PASSWORD or JWT_SECRET");
+  const missing = [];
+  if (requireAuth) {
+    if (!ADMIN_PASSWORD) missing.push("ADMIN_PASSWORD");
+    if (!JWT_SECRET) missing.push("JWT_SECRET");
   }
-  if (requireGithub && (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO)) {
-    throw new Error("Missing GitHub configuration");
+  if (requireGithub) {
+    if (!GITHUB_TOKEN) missing.push("GITHUB_TOKEN");
+    if (!GITHUB_OWNER) missing.push("GITHUB_OWNER");
+    if (!GITHUB_REPO) missing.push("GITHUB_REPO");
+  }
+  if (missing.length) {
+    throw new Error(`Missing configuration: ${missing.join(", ")}`);
   }
   return {
     adminPassword: ADMIN_PASSWORD,
