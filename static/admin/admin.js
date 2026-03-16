@@ -434,7 +434,7 @@ function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
     const img = document.createElement("img");
     img.src = item.url;
     img.alt = item.name || "Image";
-    img.className = "media-thumb";
+    img.className = `media-thumb${isPicker ? " media-thumb--picker" : ""}`;
 
     previewBtn.addEventListener("click", () => {
       openImagePreview(item.url, item.name);
