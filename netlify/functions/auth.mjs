@@ -19,7 +19,11 @@ export function unauthorized(message = "Unauthorized") {
   return jsonResponse(401, { error: message });
 }
 
-export function getEnv() {
+export function getEnv(options = {}) {
+  const {
+    requireAuth = true,
+    requireGithub = true,
+  } = options;
   const {
     ADMIN_PASSWORD,
     JWT_SECRET,
@@ -35,10 +39,10 @@ export function getEnv() {
     NEXTCLOUD_FOLDER,
     NEXTCLOUD_PUBLIC_BASE_URL,
   } = process.env;
-  if (!ADMIN_PASSWORD || !JWT_SECRET) {
+  if (requireAuth && (!ADMIN_PASSWORD || !JWT_SECRET)) {
     throw new Error("Missing ADMIN_PASSWORD or JWT_SECRET");
   }
-  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+  if (requireGithub && (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO)) {
     throw new Error("Missing GitHub configuration");
   }
   return {
@@ -74,7 +78,7 @@ export function parseCookies(header = "") {
 }
 
 export function signToken(payload) {
-  const { jwtSecret } = getEnv();
+  const { jwtSecret } = getEnv({ requireGithub: false });
   return jwt.sign(payload, jwtSecret, { expiresIn: `${WEEK}s` });
 }
 
@@ -83,7 +87,7 @@ export function verifyRequest(event) {
     const cookies = parseCookies(event.headers?.cookie || event.headers?.Cookie || "");
     const token = cookies[COOKIE_NAME];
     if (!token) return { ok: false, response: unauthorized() };
-    const { jwtSecret } = getEnv();
+    const { jwtSecret } = getEnv({ requireGithub: false });
     const payload = jwt.verify(token, jwtSecret);
     return { ok: true, payload };
   } catch (err) {
