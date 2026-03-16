@@ -478,7 +478,7 @@ function setInputFiles(files) {
 async function uploadWithProgress(payload, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/.netlify/functions/uploadImage");
+    xhr.open("POST", "/api/uploadImage");
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.withCredentials = true;
     xhr.upload.onprogress = (evt) => {
@@ -644,7 +644,7 @@ function buildFrontMatter(data, isPhoto = false) {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(`/.netlify/functions/${path}`, {
+  const res = await fetch(`/api/${path}`, {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
