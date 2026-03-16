@@ -9,7 +9,7 @@ export const handler = async (event) => {
     return jsonResponse(400, { error: "Invalid JSON" });
   }
   const { password } = payload;
-  const env = getEnv();
+  const env = getEnv({ requireGithub: false });
   if (password !== env.adminPassword) {
     return unauthorized("Invalid password");
   }
