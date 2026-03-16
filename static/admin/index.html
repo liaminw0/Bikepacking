@@ -64,22 +64,23 @@
     </section>
 
     <section id="uploadsView" class="card hidden">
+      <div class="section-heading">
+        <h1>Media</h1>
+      </div>
+      <div class="compact-upload-stack">
+        <label class="upload-multi-btn compact-upload-trigger">
+          <input type="file" id="bulkImageInput" accept="image/*" multiple>
+          Select images
+        </label>
+        <button type="button" id="bulkUploadBtn" class="primary small">Upload selected</button>
+      </div>
+      <div class="upload-progress hidden" id="bulkUploadProgress">
+        <div class="upload-progress__bar" id="bulkUploadProgressBar"></div>
+        <span class="upload-progress__label" id="bulkUploadProgressLabel">0%</span>
+      </div>
       <div class="uploads-panel content-block">
         <div class="block-heading">
-          <div>
-            <h2>Uploads</h2>
-          </div>
-        </div>
-        <div class="compact-upload-stack">
-          <label class="upload-multi-btn compact-upload-trigger">
-            <input type="file" id="bulkImageInput" accept="image/*" multiple>
-            Select images
-          </label>
-          <button type="button" id="bulkUploadBtn" class="primary small">Upload selected</button>
-        </div>
-        <div class="upload-progress hidden" id="bulkUploadProgress">
-          <div class="upload-progress__bar" id="bulkUploadProgressBar"></div>
-          <span class="upload-progress__label" id="bulkUploadProgressLabel">0%</span>
+          <h2>Uploaded</h2>
         </div>
         <div class="media-gallery media-gallery--compact" id="allUploadsGallery">
           <p class="hint">Loading images...</p>
