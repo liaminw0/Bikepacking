@@ -568,6 +568,8 @@ label {
 
 .media-modal {
   grid-template-rows: auto auto minmax(0, 1fr);
+  height: calc(100dvh - 0.9rem);
+  max-height: calc(100dvh - 0.9rem);
   overflow: hidden;
 }
 
@@ -666,11 +668,14 @@ label {
   display: grid;
   gap: 0.45rem;
   min-height: 0;
+  max-height: 100%;
   padding: 0.55rem;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface-muted);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .media-gallery--compact {
@@ -694,7 +699,8 @@ label {
 .media-thumb-wrap {
   position: relative;
   width: 100%;
-  padding-top: 72%;
+  min-height: 8.5rem;
+  padding-top: 108%;
   border-radius: 10px;
   overflow: hidden;
   background: var(--surface-muted);
@@ -834,6 +840,11 @@ label {
   }
 
   .modal-content {
+    max-height: calc(100dvh - 2rem);
+  }
+
+  .media-modal {
+    height: calc(100dvh - 2rem);
     max-height: calc(100dvh - 2rem);
   }
 }
