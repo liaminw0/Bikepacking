@@ -1,5 +1,6 @@
 const CONTENT_DIRS = window.CONTENT_DIRS || [window.CONTENT_DIR || "content/journal", "content/photos"];
 const editorEl = document.getElementById("editor");
+const loadingView = document.getElementById("loadingView");
 const loginView = document.getElementById("loginView");
 const listView = document.getElementById("listView");
 const uploadsView = document.getElementById("uploadsView");
@@ -253,8 +254,18 @@ function showToast(message, isError = false) {
   setTimeout(() => toastEl.classList.add("hidden"), 3000);
 }
 
+function showLoading() {
+  loadingView?.classList.remove("hidden");
+  loginView.classList.add("hidden");
+  listView.classList.add("hidden");
+  uploadsView?.classList.add("hidden");
+  editorView.classList.add("hidden");
+  logoutBtn.classList.add("hidden");
+}
+
 function showLogin() {
   currentRoute = { view: "login" };
+  loadingView?.classList.add("hidden");
   loginView.classList.remove("hidden");
   listView.classList.add("hidden");
   uploadsView?.classList.add("hidden");
@@ -264,6 +275,7 @@ function showLogin() {
 
 function showList() {
   currentRoute = currentRoute?.view === "posts" ? currentRoute : { view: "posts", section: selectedSection };
+  loadingView?.classList.add("hidden");
   loginView.classList.add("hidden");
   listView.classList.remove("hidden");
   uploadsView?.classList.remove("hidden");
@@ -272,6 +284,7 @@ function showList() {
 }
 
 function showEditor() {
+  loadingView?.classList.add("hidden");
   loginView.classList.add("hidden");
   listView.classList.add("hidden");
   uploadsView?.classList.add("hidden");
@@ -1342,6 +1355,7 @@ async function ensureEditorReady() {
 }
 
 async function init() {
+  showLoading();
   const setEditorHeight = () => {
     editorInstanceHeight = Math.max(320, Math.floor(window.innerHeight * 0.6));
     if (editor && typeof editor.setHeight === "function") {
@@ -1495,7 +1509,10 @@ async function init() {
     .then(() => applyRoute(parseRoute()))
     .catch((err) => {
       if (err.message === "unauthorized") showLogin();
-      else showToast(err.message, true);
+      else {
+        showLogin();
+        showToast(err.message, true);
+      }
     });
 
   if (sectionFilter) {

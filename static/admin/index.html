@@ -18,7 +18,15 @@
   </header>
 
   <main class="page">
-    <section id="loginView" class="card">
+    <section id="loadingView" class="card loading-view">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <div class="section-heading">
+        <h1>Loading</h1>
+        <p class="hint">Checking admin session...</p>
+      </div>
+    </section>
+
+    <section id="loginView" class="card hidden">
       <div class="section-heading">
         <h1>Admin Login</h1>
         <p class="hint">Simple access for on-phone editing.</p>
