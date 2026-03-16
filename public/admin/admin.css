@@ -265,6 +265,14 @@ label {
   background: var(--surface-muted);
 }
 
+.post-row__header,
+.post-row__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
 .post-row strong {
   display: block;
   color: var(--text);
@@ -276,6 +284,53 @@ label {
 .post-row span {
   color: var(--muted);
   font-size: 0.72rem;
+}
+
+.post-row__date {
+  white-space: nowrap;
+}
+
+.post-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+
+.post-tag {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-width: 0;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 86%, var(--surface-strong) 14%);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tag-chip {
+  width: auto;
+  min-width: 0;
+  padding: 0.42rem 0.62rem;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.tag-chip.is-active {
+  background: var(--link);
+  border-color: var(--link);
+  color: #fff;
 }
 
 .uploads-panel {

@@ -7,19 +7,33 @@ export async function handler(event) {
   try {
     const dirs = env.contentDirs?.length ? env.contentDirs : ["content/posts"];
     const items = [];
-    const parseTitle = (file) => {
+    const parseFrontMatter = (file) => {
       try {
         const content = decodeRepoContent(file.content || "", file.encoding || "base64");
         const match = /^---\n([\s\S]*?)\n---/m.exec(content);
-        if (!match) return null;
+        if (!match) return {};
         const lines = match[1].split("\n");
+        const result = {};
         for (const line of lines) {
           const [key, ...rest] = line.split(":");
-          if (key && key.trim() === "title") return rest.join(":").trim().replace(/^"|"$/g, "");
+          if (!key || rest.length === 0) continue;
+          const normalizedKey = key.trim();
+          const value = rest.join(":").trim();
+          if (value.startsWith("[") && value.endsWith("]")) {
+            result[normalizedKey] = value
+              .slice(1, -1)
+              .split(",")
+              .map((entry) => entry.trim().replace(/^"|"$/g, ""))
+              .filter(Boolean);
+          } else if (value === "true" || value === "false") {
+            result[normalizedKey] = value === "true";
+          } else {
+            result[normalizedKey] = value.replace(/^"|"$/g, "");
+          }
         }
-        return null;
+        return result;
       } catch {
-        return null;
+        return {};
       }
     };
 
@@ -50,14 +64,16 @@ export async function handler(event) {
         try {
           const fres = await githubRequest(env, `/contents/${f.path}?ref=${env.github.branch}`);
           const fdata = await fres.json();
-          const title = fres.ok ? parseTitle(fdata) : null;
+          const frontMatter = fres.ok ? parseFrontMatter(fdata) : {};
           return {
             name: f.name,
             path: enforceContentPath(f.path, env),
             sha: f.sha,
             size: f.size,
             section: dir,
-            title,
+            title: frontMatter.title || null,
+            date: frontMatter.date || null,
+            tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
           };
         } catch {
           return {
@@ -67,6 +83,8 @@ export async function handler(event) {
             size: f.size,
             section: dir,
             title: null,
+            date: null,
+            tags: [],
           };
         }
       });

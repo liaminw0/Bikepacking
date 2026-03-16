@@ -110,14 +110,16 @@
           </label>
         </div>
 
-        <div class="editor-section">
+        <div class="editor-section" id="tagsSection">
           <div class="block-heading">
-            <h2>Metadata</h2>
+            <h2>Tags</h2>
+            <span class="hint">Use commas or tap an existing tag.</span>
           </div>
           <label>
-            Tags (comma separated)
+            Tags
             <input type="text" id="tagsInput" placeholder="tag1, tag2">
           </label>
+          <div id="tagSuggestions" class="tag-suggestions hidden"></div>
           <input type="hidden" id="slugInput">
         </div>
 

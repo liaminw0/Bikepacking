@@ -16,6 +16,8 @@ const titleInput = document.getElementById("titleInput");
 const dateInput = document.getElementById("dateInput");
 const draftInput = document.getElementById("draftInput");
 const tagsInput = document.getElementById("tagsInput");
+const tagsSection = document.getElementById("tagsSection");
+const tagSuggestions = document.getElementById("tagSuggestions");
 const slugInput = document.getElementById("slugInput");
 const sectionInput = document.getElementById("sectionInput");
 const sectionFilter = document.getElementById("sectionFilter");
@@ -80,6 +82,7 @@ let suppressHashChange = false;
 let initialEditorState = null;
 let pendingRoute = null;
 let isRouting = false;
+let allPosts = [];
 
 const isPhotoSection = (sectionVal) => {
   const value = (sectionVal || sectionInput?.value || selectedSection || "").toLowerCase();
@@ -282,13 +285,88 @@ function toggleFieldVisibility(sectionVal) {
   const isPhoto = isPhotoSection(sectionVal);
   const tagsField = tagsInput?.closest("label");
   const slugField = slugInput?.closest("label");
-  [tagsField, slugField, bodyBlock, shortcodeBtn, mediaBtn].forEach((el) => {
+  [tagsField, slugField, tagsSection, bodyBlock, shortcodeBtn, mediaBtn].forEach((el) => {
     if (!el) return;
     if (el.tagName === "BUTTON") el.classList.toggle("hidden", isPhoto);
     else el.classList.toggle("hidden", isPhoto);
   });
   photoSection?.classList.toggle("hidden", !isPhoto);
   [photoPicker, captionField].forEach((el) => el?.classList.toggle("hidden", !isPhoto));
+  if (!isPhoto) renderTagSuggestions();
+}
+
+function parseTags(value = "") {
+  return value.split(",").map((tag) => tag.trim()).filter(Boolean);
+}
+
+function setTags(tags = []) {
+  if (!tagsInput) return;
+  tagsInput.value = [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))].join(", ");
+  renderTagSuggestions();
+}
+
+function toggleTag(tag) {
+  const current = parseTags(tagsInput?.value || "");
+  const exists = current.some((entry) => entry.toLowerCase() === tag.toLowerCase());
+  const next = exists
+    ? current.filter((entry) => entry.toLowerCase() !== tag.toLowerCase())
+    : [...current, tag];
+  setTags(next);
+}
+
+function formatPostDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function getSectionTags(section) {
+  const counts = new Map();
+  allPosts
+    .filter((item) => !isPhotoSection(item.section || section) && (!section || item.section === section))
+    .forEach((item) => {
+      (item.tags || []).forEach((tag) => {
+        const normalized = tag.trim();
+        if (!normalized) return;
+        const key = normalized.toLowerCase();
+        const entry = counts.get(key);
+        counts.set(key, {
+          label: entry?.label || normalized,
+          count: (entry?.count || 0) + 1,
+        });
+      });
+    });
+  return [...counts.values()]
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .map((entry) => entry.label);
+}
+
+function renderTagSuggestions() {
+  if (!tagSuggestions) return;
+  const section = sectionInput?.value || selectedSection;
+  if (isPhotoSection(section)) {
+    tagSuggestions.classList.add("hidden");
+    tagSuggestions.innerHTML = "";
+    return;
+  }
+  const availableTags = getSectionTags(section);
+  if (!availableTags.length) {
+    tagSuggestions.classList.add("hidden");
+    tagSuggestions.innerHTML = "";
+    return;
+  }
+  const active = new Set(parseTags(tagsInput?.value || "").map((tag) => tag.toLowerCase()));
+  tagSuggestions.innerHTML = "";
+  availableTags.forEach((tag) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = `tag-chip${active.has(tag.toLowerCase()) ? " is-active" : ""}`;
+    chip.textContent = `#${tag}`;
+    chip.addEventListener("click", () => toggleTag(tag));
+    tagSuggestions.appendChild(chip);
+  });
+  tagSuggestions.classList.remove("hidden");
 }
 
 function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
@@ -665,25 +743,51 @@ async function loadPosts() {
   if (Array.isArray(data.contentDirs) && data.contentDirs.length) {
     setSections(data.contentDirs);
   }
+  allPosts = Array.isArray(data.items) ? data.items.slice() : [];
   postsContainer.innerHTML = "";
-  if (!data.items || !data.items.length) {
+  if (!allPosts.length) {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
     return;
   }
   const selected = sectionFilter?.value || selectedSection || CONTENT_DIRS[0];
   selectedSection = selected;
   if (sectionInput) sectionInput.value = selected;
-  data.items.forEach((item) => {
-    const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
-    if (section && section !== selected) return;
+  const filteredItems = allPosts
+    .filter((item) => {
+      const section = item.section || (item.path || "").split("/").slice(0, -1).join("/");
+      return !section || section === selected;
+    })
+    .sort((a, b) => {
+      const aDate = a.date ? new Date(a.date).getTime() : 0;
+      const bDate = b.date ? new Date(b.date).getTime() : 0;
+      if (aDate !== bDate) return bDate - aDate;
+      return (a.title || a.name || "").localeCompare(b.title || b.name || "");
+    });
+  if (!filteredItems.length) {
+    postsContainer.innerHTML = "<p class='hint'>No posts in this section yet.</p>";
+    renderTagSuggestions();
+    return;
+  }
+  filteredItems.forEach((item) => {
     const row = document.createElement("button");
     row.className = "post-row";
     row.type = "button";
     const title = item.title || item.name;
-    row.innerHTML = `<div><strong>${title}</strong></div><span>${item.size}b</span>`;
+    const tagsMarkup = (item.tags || []).slice(0, 4).map((tag) => `<span class="post-tag">#${tag}</span>`).join("");
+    row.innerHTML = `
+      <div class="post-row__header">
+        <strong>${title}</strong>
+        <span class="post-row__date">${formatPostDate(item.date)}</span>
+      </div>
+      <div class="post-row__meta">
+        <span>${item.size}b</span>
+        <div class="post-row__tags">${tagsMarkup}</div>
+      </div>
+    `;
     row.addEventListener("click", () => setRoute({ view: "editor-edit", path: item.path }));
     postsContainer.appendChild(row);
   });
+  renderTagSuggestions();
 }
 
 async function openPost(path) {
@@ -694,7 +798,7 @@ async function openPost(path) {
     titleInput.value = fm.title || "";
     dateInput.value = fm.date ? formatDateInput(new Date(fm.date)) : formatDateInput(new Date());
     draftInput.checked = !!fm.draft;
-    tagsInput.value = Array.isArray(fm.tags) ? fm.tags.join(", ") : "";
+    setTags(Array.isArray(fm.tags) ? fm.tags : []);
     if (slugInput) slugInput.value = fm.slug || "";
     const section = (data.path || "").split("/").slice(0, -1).join("/");
     if (sectionInput && section) sectionInput.value = section;
@@ -724,7 +828,7 @@ function newPost() {
   titleInput.value = "";
   dateInput.value = formatDateInput(new Date());
   draftInput.checked = false;
-  tagsInput.value = "";
+  setTags([]);
   if (slugInput) slugInput.value = "";
   editor.setMarkdown("");
   photoImageInput && (photoImageInput.value = "");
@@ -749,10 +853,7 @@ async function savePost(options = {}) {
   const chosenDir = (sectionInput && sectionInput.value) ? sectionInput.value : selectedSection || CONTENT_DIRS[0];
   const photoMode = isPhotoSection(chosenDir);
   const body = photoMode ? "" : editor.getMarkdown();
-  const tags = tagsInput.value
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
+  const tags = parseTags(tagsInput.value);
   const fm = buildFrontMatter({
     title,
     date: date.toISOString(),
@@ -1131,6 +1232,10 @@ async function init() {
         setRoute(currentRoute, { replace: true });
       }
     });
+  }
+
+  if (tagsInput) {
+    tagsInput.addEventListener("input", renderTagSuggestions);
   }
 }
 
