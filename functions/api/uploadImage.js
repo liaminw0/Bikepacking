@@ -1,10 +1,16 @@
-import { getNextcloudConfig, jsonResponse, verifyRequest } from "../../netlify/functions/auth.mjs";
+import {
+  basicAuthHeader,
+  decodeBase64ToBytes,
+  getNextcloudConfig,
+  jsonResponse,
+  verifyRequest,
+} from "../../netlify/functions/auth.mjs";
 import { createNetlifyOnRequest } from "./_lib/netlify-adapter.js";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 const basicAuthHeaders = (cfg) => ({
-  Authorization: `Basic ${Buffer.from(`${cfg.username}:${cfg.password}`).toString("base64")}`,
+  Authorization: basicAuthHeader(cfg.username, cfg.password),
 });
 
 const buildTargetUrl = (cfg, fileName = "") => {
@@ -81,12 +87,12 @@ async function handler(event) {
 
   let buffer;
   try {
-    buffer = Buffer.from(data, "base64");
+    buffer = decodeBase64ToBytes(data);
   } catch {
     return jsonResponse(400, { error: "Invalid image data" });
   }
 
-  if (buffer.length > MAX_IMAGE_SIZE) {
+  if (buffer.byteLength > MAX_IMAGE_SIZE) {
     return jsonResponse(400, { error: "Image too large (max 10MB)" });
   }
 

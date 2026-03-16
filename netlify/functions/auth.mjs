@@ -1,6 +1,7 @@
 export const COOKIE_NAME = "hugo_admin";
 const WEEK = 7 * 24 * 60 * 60;
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 function runtimeEnv() {
   return globalThis.__CF_PAGES_ENV__ || globalThis.process?.env || {};
@@ -87,20 +88,54 @@ export function parseCookies(header = "") {
   }, {});
 }
 
-function toBase64Url(value) {
-  const bytes = typeof value === "string" ? encoder.encode(value) : value;
+function bytesToBinary(bytes) {
   let binary = "";
-  bytes.forEach((byte) => {
+  for (const byte of bytes) {
     binary += String.fromCharCode(byte);
-  });
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  }
+  return binary;
+}
+
+function normalizeBase64(value = "") {
+  return value.replace(/\s+/g, "");
+}
+
+export function encodeBase64(value) {
+  const bytes = typeof value === "string" ? encoder.encode(value) : value;
+  return btoa(bytesToBinary(bytes));
+}
+
+export function decodeBase64ToBytes(value) {
+  const binary = atob(normalizeBase64(value));
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+export function decodeBase64ToUtf8(value) {
+  return decoder.decode(decodeBase64ToBytes(value));
+}
+
+export function encodeRepoContent(value) {
+  return encodeBase64(value);
+}
+
+export function decodeRepoContent(value, encoding = "base64") {
+  if (!value) return "";
+  if (encoding === "base64") return decodeBase64ToUtf8(value);
+  return value;
+}
+
+export function basicAuthHeader(username, password) {
+  return `Basic ${encodeBase64(`${username}:${password}`)}`;
+}
+
+function toBase64Url(value) {
+  return encodeBase64(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function fromBase64Url(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
-  const binary = atob(padded);
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return decodeBase64ToBytes(padded);
 }
 
 async function importSigningKey(secret) {
@@ -121,7 +156,7 @@ async function createSignature(input, secret) {
 
 function decodeJsonSegment(segment) {
   const bytes = fromBase64Url(segment);
-  return JSON.parse(new TextDecoder().decode(bytes));
+  return JSON.parse(decoder.decode(bytes));
 }
 
 export async function signToken(payload) {

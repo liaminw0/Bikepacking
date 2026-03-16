@@ -1,4 +1,4 @@
-import { enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
+import { decodeRepoContent, enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
 
 export const handler = async (event) => {
   const auth = await verifyRequest(event);
@@ -10,7 +10,7 @@ export const handler = async (event) => {
     // Helper to parse title from a GitHub file object.
     const parseTitle = (file) => {
       try {
-        const content = Buffer.from(file.content || "", file.encoding || "base64").toString("utf8");
+        const content = decodeRepoContent(file.content || "", file.encoding || "base64");
         const match = /^---\n([\s\S]*?)\n---/m.exec(content);
         if (!match) return null;
         const lines = match[1].split("\n");

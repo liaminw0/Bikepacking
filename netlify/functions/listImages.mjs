@@ -1,9 +1,9 @@
-import { getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
+import { basicAuthHeader, getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
 
 const MAX_ITEMS = 200;
 
 const basicAuthHeaders = (cfg) => ({
-  Authorization: `Basic ${Buffer.from(`${cfg.username}:${cfg.password}`).toString("base64")}`,
+  Authorization: basicAuthHeader(cfg.username, cfg.password),
 });
 
 const buildTargetUrl = (cfg, fileName = "") => {

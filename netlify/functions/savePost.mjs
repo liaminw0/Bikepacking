@@ -1,4 +1,4 @@
-import { enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
+import { encodeRepoContent, enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
 
 export const handler = async (event) => {
   const auth = await verifyRequest(event);
@@ -16,7 +16,7 @@ export const handler = async (event) => {
   const path = enforceContentPath(rawPath, env);
   const payload = {
     message: message || `Update ${path}`,
-    content: Buffer.from(content).toString("base64"),
+    content: encodeRepoContent(content),
     branch: env.github.branch,
   };
   if (sha) payload.sha = sha;
