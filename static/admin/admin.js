@@ -429,8 +429,6 @@ function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
     previewBtn.className = `media-preview-trigger${isPicker ? " media-preview-trigger--picker" : ""}`;
     previewBtn.setAttribute("aria-label", `Preview ${item.name || "image"}`);
 
-    const thumbWrap = document.createElement("div");
-    thumbWrap.className = `media-thumb-wrap${isPicker ? " media-thumb-wrap--picker" : ""}`;
     const img = document.createElement("img");
     img.src = item.url;
     img.alt = item.name || "Image";
@@ -452,8 +450,14 @@ function renderMediaGallery(items = [], target = mediaGallery, onSelect) {
     const sizeText = item.size ? `${Math.round(item.size / 1024)}kb` : "";
     detail.textContent = [modifiedText, sizeText].filter(Boolean).join(" • ");
 
-    thumbWrap.appendChild(img);
-    previewBtn.appendChild(thumbWrap);
+    if (isPicker) {
+      previewBtn.appendChild(img);
+    } else {
+      const thumbWrap = document.createElement("div");
+      thumbWrap.className = "media-thumb-wrap";
+      thumbWrap.appendChild(img);
+      previewBtn.appendChild(thumbWrap);
+    }
     meta.appendChild(label);
     if (detail.textContent) meta.appendChild(detail);
 
