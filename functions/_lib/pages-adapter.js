@@ -56,7 +56,7 @@ function toResponse(result) {
   });
 }
 
-export function createNetlifyOnRequest(handler) {
+export function createPagesHandler(handler) {
   return async function onRequest(context) {
     const restoreEnv = setRuntimeEnv(context.env || {});
 

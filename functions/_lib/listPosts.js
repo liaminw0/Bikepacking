@@ -1,13 +1,12 @@
-import { decodeRepoContent, enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
+import { decodeRepoContent, enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.js";
 
-export const handler = async (event) => {
+export async function handler(event) {
   const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   const env = getEnv();
   try {
     const dirs = env.contentDirs?.length ? env.contentDirs : ["content/posts"];
     const items = [];
-    // Helper to parse title from a GitHub file object.
     const parseTitle = (file) => {
       try {
         const content = decodeRepoContent(file.content || "", file.encoding || "base64");
@@ -24,7 +23,6 @@ export const handler = async (event) => {
       }
     };
 
-    // Limit concurrency when fetching file content for titles.
     const fetchWithLimit = async (tasks, limit = 5) => {
       const results = [];
       let idx = 0;
@@ -80,4 +78,4 @@ export const handler = async (event) => {
     console.error(err);
     return jsonResponse(500, { error: "Failed to list posts" });
   }
-};
+}

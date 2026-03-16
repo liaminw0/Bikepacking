@@ -1,4 +1,4 @@
-import { basicAuthHeader, getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.mjs";
+import { basicAuthHeader, getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.js";
 
 const MAX_ITEMS = 200;
 
@@ -30,7 +30,7 @@ const parsePropfind = (xml, cfg) => {
     if (!hrefMatch) return;
     const rawHref = decodeEntities(hrefMatch[1]);
     const decodedHref = decodeURIComponent(rawHref);
-    if (decodedHref.endsWith("/")) return; // skip directories (including the folder itself)
+    if (decodedHref.endsWith("/")) return;
     const typeMatch = resp.match(/<d:getcontenttype>([^<]+)<\/d:getcontenttype>/i);
     const contentType = (typeMatch?.[1] || "").toLowerCase();
     if (contentType && !contentType.startsWith("image/")) return;
@@ -48,7 +48,7 @@ const parsePropfind = (xml, cfg) => {
   return items.slice(0, MAX_ITEMS);
 };
 
-export const handler = async (event) => {
+export async function handler(event) {
   const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   if (event.httpMethod !== "GET") return jsonResponse(405, { error: "Method not allowed" });
@@ -80,4 +80,4 @@ export const handler = async (event) => {
     console.error(err);
     return jsonResponse(500, { error: "Failed to list images" });
   }
-};
+}

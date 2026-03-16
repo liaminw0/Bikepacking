@@ -4,8 +4,8 @@ import {
   getNextcloudConfig,
   jsonResponse,
   verifyRequest,
-} from "../../netlify/functions/auth.mjs";
-import { createNetlifyOnRequest } from "./_lib/netlify-adapter.js";
+} from "../_lib/auth.js";
+import { createPagesHandler } from "../_lib/pages-adapter.js";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
@@ -119,4 +119,4 @@ async function handler(event) {
   }
 }
 
-export const onRequest = createNetlifyOnRequest(handler);
+export const onRequest = createPagesHandler(handler);

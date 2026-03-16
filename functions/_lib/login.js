@@ -1,6 +1,6 @@
-import { authCookie, getEnv, jsonResponse, unauthorized, signToken } from "./auth.mjs";
+import { authCookie, getEnv, jsonResponse, unauthorized, signToken } from "./auth.js";
 
-export const handler = async (event) => {
+export async function handler(event) {
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method not allowed" });
   let payload;
   try {
@@ -15,4 +15,4 @@ export const handler = async (event) => {
   }
   const token = await signToken({ role: "admin" });
   return jsonResponse(200, { ok: true }, { "Set-Cookie": authCookie(token) });
-};
+}

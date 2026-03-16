@@ -1,6 +1,6 @@
-import { decodeRepoContent, enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.mjs";
+import { decodeRepoContent, enforceContentPath, getEnv, githubRequest, jsonResponse, verifyRequest } from "./auth.js";
 
-export const handler = async (event) => {
+export async function handler(event) {
   const auth = await verifyRequest(event);
   if (!auth.ok) return auth.response;
   const pathParam = event.queryStringParameters?.path;
@@ -17,4 +17,4 @@ export const handler = async (event) => {
     console.error(err);
     return jsonResponse(500, { error: "Failed to fetch post" });
   }
-};
+}

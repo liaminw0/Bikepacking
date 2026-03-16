@@ -1,4 +1,4 @@
-import { handler } from "../../netlify/functions/savePost.mjs";
-import { createNetlifyOnRequest } from "./_lib/netlify-adapter.js";
+import { handler } from "../_lib/savePost.js";
+import { createPagesHandler } from "../_lib/pages-adapter.js";
 
-export const onRequest = createNetlifyOnRequest(handler);
+export const onRequest = createPagesHandler(handler);
