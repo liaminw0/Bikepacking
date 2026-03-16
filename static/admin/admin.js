@@ -281,58 +281,6 @@ function fileToBase64(file) {
   });
 }
 
-async function loadImageBitmap(file) {
-  if ("createImageBitmap" in window) {
-    return createImageBitmap(file);
-  }
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Failed to decode image"));
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-function canvasToBlob(canvas, type, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) reject(new Error("Failed to encode image"));
-      else resolve(blob);
-    }, type, quality);
-  });
-}
-
-async function optimizeImageForUpload(file) {
-  if (!file?.type?.startsWith("image/")) return file;
-  const bitmap = await loadImageBitmap(file);
-  const width = bitmap.width || bitmap.naturalWidth || 0;
-  const height = bitmap.height || bitmap.naturalHeight || 0;
-  const maxDimension = 2400;
-  const scale = Math.min(1, maxDimension / Math.max(width, height || 1));
-  const targetWidth = Math.max(1, Math.round(width * scale));
-  const targetHeight = Math.max(1, Math.round(height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas unavailable");
-  ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
-  if (typeof bitmap.close === "function") bitmap.close();
-  const originalType = file.type || "image/jpeg";
-  const isTransparentSource = originalType === "image/png" || originalType === "image/gif" || originalType === "image/webp";
-  const outputType = isTransparentSource ? "image/png" : originalType;
-  const quality = outputType === "image/jpeg" || outputType === "image/webp" ? 0.85 : undefined;
-  const optimizedBlob = await canvasToBlob(canvas, outputType, quality);
-  const extensionMap = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp",
-  };
-  const baseName = (file.name || "image").replace(/\.[^.]+$/, "") || "image";
-  const extension = extensionMap[outputType] || (file.name.match(/\.[^.]+$/)?.[0] || ".img");
-  return new File([optimizedBlob], `${baseName}${extension}`, { type: outputType });
-}
-
 function toggleFieldVisibility(sectionVal) {
   const isPhoto = isPhotoSection(sectionVal);
   const tagsField = tagsInput?.closest("label");
@@ -645,11 +593,10 @@ async function uploadImage() {
     toggleUploadProgress(true);
     setUploadProgress(5);
     if (uploadImageBtn) uploadImageBtn.disabled = true;
-    const optimizedFile = await optimizeImageForUpload(file);
-    const base64 = await fileToBase64(optimizedFile);
+    const base64 = await fileToBase64(file);
     const payload = {
-      name: optimizedFile.name,
-      contentType: optimizedFile.type,
+      name: file.name,
+      contentType: file.type,
       data: base64,
     };
     const res = await uploadWithProgress(payload, (p) => setUploadProgress(Math.max(10, p)));
@@ -691,11 +638,10 @@ async function uploadBulkImages() {
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
       setBulkProgress(5, i + 1, files.length);
-      const optimizedFile = await optimizeImageForUpload(file);
-      const base64 = await fileToBase64(optimizedFile);
+      const base64 = await fileToBase64(file);
       const payload = {
-        name: optimizedFile.name,
-        contentType: optimizedFile.type,
+        name: file.name,
+        contentType: file.type,
         data: base64,
       };
       await uploadWithProgress(payload, (p) => setBulkProgress(Math.max(10, p), i + 1, files.length));
