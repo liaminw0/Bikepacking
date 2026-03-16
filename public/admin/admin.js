@@ -1073,8 +1073,73 @@ function toggleShortcodeModal(open) {
   shortcodeModal.classList.toggle("hidden", !open);
 }
 
+function shortcodeSupportsLocation(sc) {
+  const keys = new Set((sc?.fields || []).map((field) => field.key));
+  return keys.has("lat") && (keys.has("lon") || keys.has("lng"));
+}
+
+function geolocationErrorMessage(error) {
+  switch (error?.code) {
+    case error?.PERMISSION_DENIED:
+      return "Location permission denied";
+    case error?.POSITION_UNAVAILABLE:
+      return "Location unavailable";
+    case error?.TIMEOUT:
+      return "Location lookup timed out";
+    default:
+      return "Unable to get current location";
+  }
+}
+
+function fillShortcodeLocation(button) {
+  const latInput = shortcodeFields.querySelector('[data-key="lat"]');
+  const lonInput = shortcodeFields.querySelector('[data-key="lon"], [data-key="lng"]');
+  if (!latInput || !lonInput) {
+    showToast("Location fields unavailable", true);
+    return;
+  }
+  if (!navigator.geolocation) {
+    showToast("Geolocation unavailable", true);
+    return;
+  }
+
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = "Locating...";
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      latInput.value = position.coords.latitude.toFixed(6);
+      lonInput.value = position.coords.longitude.toFixed(6);
+      button.disabled = false;
+      button.textContent = originalText;
+      showToast("Location filled");
+    },
+    (error) => {
+      button.disabled = false;
+      button.textContent = originalText;
+      showToast(geolocationErrorMessage(error), true);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000,
+    },
+  );
+}
+
 function renderShortcodeFields(sc) {
   shortcodeFields.innerHTML = "";
+  if (shortcodeSupportsLocation(sc)) {
+    const actions = document.createElement("div");
+    actions.className = "shortcode-field-actions";
+    const locateBtn = document.createElement("button");
+    locateBtn.type = "button";
+    locateBtn.className = "ghost small block";
+    locateBtn.textContent = "Use current location";
+    locateBtn.addEventListener("click", () => fillShortcodeLocation(locateBtn));
+    actions.appendChild(locateBtn);
+    shortcodeFields.appendChild(actions);
+  }
   sc.fields.forEach((field) => {
     const label = document.createElement("label");
     label.textContent = field.label;

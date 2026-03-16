@@ -219,6 +219,11 @@ label {
   background: var(--surface);
 }
 
+.shortcode-field-actions {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .list-toolbar,
 .compact-upload-stack {
   display: grid;
