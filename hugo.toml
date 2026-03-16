@@ -1,4 +1,4 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://liam.inwards.io/'
 languageCode = 'en-us'
 title = 'Bikepacking to Istanbul'
 theme = 'base'
@@ -8,13 +8,13 @@ theme = 'base'
   avatar = "/profile.jpg"
   [[params.social]]
     name = "GitHub"
-    url = "https://github.com/liaminw0"
+    url = "https://github.com/liaminw0/Bikepacking"
   [[params.social]]
     name = "Instagram"
     url = "https://www.instagram.com/liam_inw"
   [[params.social]]
     name = "Email"
-    url = "mailto:you@example.com"
+    url = "mailto:liam@inwards.intro"
   [[params.social]]
     name = "RSS"
 
