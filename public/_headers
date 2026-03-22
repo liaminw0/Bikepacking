@@ -1,5 +1,0 @@
-/admin/*
-  Cache-Control: no-store
-  Referrer-Policy: same-origin
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
