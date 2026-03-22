@@ -1,6 +1,7 @@
 # Dependencies and build artifacts
 node_modules/
 .npm/
+public/
 *.log
 npm-debug.log*
 yarn-error.log*
@@ -16,7 +17,3 @@ pnpm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
-
-# Netlify CLI state
-.netlify/state.json
-node_modules/
