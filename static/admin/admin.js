@@ -111,6 +111,8 @@ const isPhotoSection = (sectionVal) => {
   return value.includes("content/photos");
 };
 
+const isSectionIndexItem = (item) => /\/_index\.md$/i.test((item?.path || "").replace(/\\/g, "/"));
+
 function parseRoute() {
   const hash = window.location.hash.replace(/^#/, "");
   const normalized = hash.startsWith("/") ? hash : `/${hash || ""}`;
@@ -919,7 +921,7 @@ async function loadPosts() {
   if (Array.isArray(data.contentDirs) && data.contentDirs.length) {
     setSections(data.contentDirs);
   }
-  allPosts = Array.isArray(data.items) ? data.items.slice() : [];
+  allPosts = Array.isArray(data.items) ? data.items.filter((item) => !isSectionIndexItem(item)) : [];
   postsContainer.innerHTML = "";
   if (!allPosts.length) {
     postsContainer.innerHTML = "<p class='hint'>No posts yet.</p>";
