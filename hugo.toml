@@ -2,6 +2,7 @@ baseURL = 'https://liam.inwards.io/'
 languageCode = 'en-us'
 title = 'Bikepacking to Istanbul'
 theme = 'base'
+cleanDestinationDir = true
 
 [params]
   about = "Replace this with your own intro text from hugo.toml."

@@ -15,7 +15,7 @@
 {{ if eq .Section "journal" }}
 <div class="journal-layout">
   <div class="journal-list">
-    {{ range .Pages }}
+    {{ range .RegularPages.ByDate.Reverse }}
     <article class="post-snippet">
       <h3>
         <a href="{{ .RelPermalink }}">{{ .Title }}</a>
@@ -89,7 +89,7 @@
   })();
 </script>
 {{ else }}
-  {{ range.Data.Pages }}
+  {{ range .RegularPages.ByDate.Reverse }}
   <article class="post-snippet">
     <h3>
       <a href="{{ .RelPermalink }}">{{ .Title }}</a>
