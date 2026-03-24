@@ -1,27 +1,18 @@
 {{ define "main" }}
 {{ $journalPages := where .RegularPages "Section" "journal" }}
-{{ $useJournalLayout := or (eq .Section "journal") (and (eq .Type "tags") (gt (len $journalPages) 0)) }}
-{{ if $useJournalLayout }}
+{{ if and (eq .Type "tags") (gt (len $journalPages) 0) }}
 <div class="journal-title-row">
-  {{ if eq .Section "journal" }}
   <div class="journal-heading-group">
-    <h3 class="journal-context journal-context--placeholder" aria-hidden="true">Journal<span class="journal-title-separator"> / </span></h3>
+    <h3 class="journal-context"><a class="journal-back-link" href="{{ "/journal/" | relURL }}">Journal</a><span class="journal-title-separator"> / </span></h3>
     <h1>{{ .Title }}</h1>
   </div>
-  {{ else }}
-  <h1>{{ .Title }}</h1>
-  {{ end }}
   <button class="journal-tags__toggle" type="button" aria-expanded="false" aria-controls="journal-tags-panel">
     Show tags
   </button>
 </div>
-{{ else }}
-<h1>{{ .Title }}</h1>
-{{ end }}
 
 {{ .Content }}
 
-{{ if $useJournalLayout }}
 <div class="journal-layout">
   <div class="journal-list">
     {{ range $journalPages.GroupByDate "2006" "desc" }}
@@ -44,17 +35,17 @@
   </div>
   <aside class="journal-tags" id="journal-tags-panel">
     <h3>Tags</h3>
-    {{ $journalTags := slice }}
+    {{ $allJournalTags := slice }}
     {{ range $name, $term := .Site.Taxonomies.tags }}
-      {{ $journalPages := where $term.Pages "Section" "journal" }}
-      {{ if gt (len $journalPages) 0 }}
-        {{ $journalTags = $journalTags | append (dict "name" $name "page" $term.Page "count" (len $journalPages)) }}
+      {{ $tagJournalPages := where $term.Pages "Section" "journal" }}
+      {{ if gt (len $tagJournalPages) 0 }}
+        {{ $allJournalTags = $allJournalTags | append (dict "name" $name "page" $term.Page "count" (len $tagJournalPages)) }}
       {{ end }}
     {{ end }}
-    {{ $journalTags = sort $journalTags "name" }}
-    {{ if gt (len $journalTags) 0 }}
+    {{ $allJournalTags = sort $allJournalTags "name" }}
+    {{ if gt (len $allJournalTags) 0 }}
       <ul class="tag-list">
-        {{ range $journalTags }}
+        {{ range $allJournalTags }}
         <li>
           <a href="{{ .page.RelPermalink }}">{{ .name }}</a>
           <span aria-hidden="true">({{ .count }})</span>
@@ -105,15 +96,19 @@
   })();
 </script>
 {{ else }}
-  {{ range .RegularPages.ByDate.Reverse }}
-  <article class="post-snippet">
-    <h3>
-      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-    </h3>
-    <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
-      {{ .Date.Format "January 2, 2006" }}
-    </time>
-  </article>
-  {{ end }}
+<h1>{{ .Title }}</h1>
+
+{{ .Content }}
+
+{{ range .RegularPages.ByDate.Reverse }}
+<article class="post-snippet">
+  <h3>
+    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+  </h3>
+  <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+    {{ .Date.Format "January 2, 2006" }}
+  </time>
+</article>
+{{ end }}
 {{ end }}
 {{ end }}

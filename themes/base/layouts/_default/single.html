@@ -1,5 +1,17 @@
 {{ define "main" }}
+{{ if eq .Section "journal" }}
+<div class="journal-heading-group">
+  <h3 class="journal-context"><a class="journal-back-link" href="{{ "/journal/" | relURL }}">Journal</a><span class="journal-title-separator"> / </span></h3>
+  <h1>{{ .Title }}</h1>
+</div>
+{{ else if eq .Section "photos" }}
+<div class="journal-heading-group">
+  <h3 class="journal-context"><a class="journal-back-link" href="{{ "/photos/" | relURL }}">Photos</a><span class="journal-title-separator"> / </span></h3>
+  <h1>{{ .Title }}</h1>
+</div>
+{{ else }}
 <h1>{{ .Title }}</h1>
+{{ end }}
 
 {{ if or (eq .Section "journal") (eq .Section "photos") }}
   <p class="post-meta">

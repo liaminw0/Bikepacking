@@ -223,6 +223,10 @@ body {
   margin-bottom: 0.25rem;
 }
 
+.post-snippet h4 {
+  margin-bottom: 0.25rem;
+}
+
 .post-meta {
   margin: 0.25rem 0 0.5rem;
 }
@@ -247,12 +251,85 @@ body {
   margin: 0;
 }
 
+.journal-heading-group h1 {
+  margin: 0;
+}
+
+.journal-context {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.journal-context--placeholder {
+  visibility: hidden;
+}
+
+.journal-back-link {
+  color: var(--link);
+  text-decoration: underline;
+}
+
+.journal-title-separator {
+  opacity: 0.5;
+}
+
 .journal-title-row .journal-tags__toggle {
   display: none;
 }
 
 .journal-list {
   min-width: 0;
+}
+
+.journal-year-group + .journal-year-group {
+  margin-top: 2rem;
+}
+
+.journal-year-group h2 {
+  margin: 0 0 1rem;
+}
+
+.journal-month-group + .journal-month-group {
+  margin-top: 1.5rem;
+}
+
+.journal-month-group h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.journal-month-group .post-snippet + .post-snippet {
+  margin-top: 0.9rem;
+}
+
+.journal-month-group .post-snippet {
+  margin: 0;
+}
+
+.journal-month-group .post-snippet h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.journal-month-group .post-snippet h4 a {
+  color: var(--link);
+}
+
+.journal-entry-month {
+  margin-right: 0.35rem;
+  font-size: 0.7em;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.home-entry-date {
+  display: block;
+  margin: 0.15rem 0 0;
+  font-size: 0.7em;
 }
 
 .journal-tags {
@@ -334,11 +411,31 @@ body {
 
 /* PHOTO GRID */
 
+.photo-year-group + .photo-year-group {
+  margin-top: 2rem;
+}
+
+.photo-year-group h2 {
+  margin: 0 0 1rem;
+}
+
+.photo-month-group + .photo-month-group {
+  margin-top: 1.5rem;
+}
+
+.photo-month-group h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  margin: 1.5rem 0;
+  margin: 0;
 }
 
 @media screen and (max-width: 48rem) {
@@ -351,6 +448,10 @@ body {
   display: block;
   text-decoration: none;
   color: inherit;
+}
+
+.photo-grid__item.is-hidden {
+  display: none;
 }
 
 .photo-grid__thumb {
@@ -368,6 +469,26 @@ body {
 
 .photo-grid__title {
   display: none;
+}
+
+.photo-grid__actions {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0 0;
+}
+
+.photo-grid__more {
+  display: inline-block;
+  color: var(--link);
+  text-decoration: underline;
+}
+
+.photo-grid__more-meta {
+  position: absolute;
+  left: calc(50% + 3.5rem);
+  top: 0;
+  opacity: 0.7;
+  white-space: nowrap;
 }
 
 .photo-full img {

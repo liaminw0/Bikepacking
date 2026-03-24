@@ -1,24 +1,203 @@
 {{ define "main" }}
-<h1>{{ .Title }}</h1>
+<div class="journal-heading-group">
+  <h3 class="journal-context journal-context--placeholder" aria-hidden="true">Photos<span class="journal-title-separator"> / </span></h3>
+  <h1>{{ .Title }}</h1>
+</div>
 
 {{ with .Content }}{{ . }}{{ end }}
 
-<div class="photo-grid">
-  {{ range .Pages }}
-    {{ $placeholder := "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='%23f2f2f2'%3E%3Crect width='600' height='600'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='32' font-family='Arial,sans-serif'%3EPhoto%3C/text%3E%3C/svg%3E" }}
-    {{ $src := $placeholder }}
-    {{ $img := .Resources.GetMatch "*.{jpg,jpeg,png,webp,gif}" }}
-    {{ if $img }}
-      {{ $src = $img.RelPermalink }}
-    {{ else if .Params.image }}
-      {{ $src = .Params.image }}
-    {{ end }}
-    <a class="photo-grid__item{{ if eq $src $placeholder }} photo-grid__item--placeholder{{ end }}" href="{{ .RelPermalink }}">
-      <div class="photo-grid__thumb">
-        <img src="{{ $src }}" alt="{{ .Title }}">
+{{ $allPages := .Pages.ByDate.Reverse }}
+{{ $paginator := .Paginate $allPages 9 }}
+{{ $displayPages := $paginator.Pages }}
+{{ if eq $paginator.PageNumber 1 }}
+  {{ $displayPages = first 12 $allPages }}
+{{ end }}
+
+<div class="photo-archive">
+  {{ range $displayPages.GroupByDate "2006" "desc" }}
+  <section class="photo-year-group" data-year="{{ .Key }}">
+    <h2>{{ .Key }}</h2>
+    {{ range .Pages.GroupByDate "January" "desc" }}
+    {{ $monthName := .Key }}
+    {{ $monthPages := .Pages }}
+    {{ $firstPage := index $monthPages 0 }}
+    {{ $monthNumber := $firstPage.Date.Format "01" }}
+    {{ $yearNumber := $firstPage.Date.Format "2006" }}
+    <section class="photo-month-group" data-group-key="{{ printf "%s-%s" $yearNumber $monthNumber }}" data-year="{{ $yearNumber }}" data-month="{{ $monthNumber }}" data-month-name="{{ $monthName }}">
+      <h3>{{ $monthName }}</h3>
+      <div class="photo-grid">
+        {{ range $monthPages.ByDate.Reverse }}
+          {{ $placeholder := "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='%23f2f2f2'%3E%3Crect width='600' height='600'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='32' font-family='Arial,sans-serif'%3EPhoto%3C/text%3E%3C/svg%3E" }}
+          {{ $src := $placeholder }}
+          {{ $img := .Resources.GetMatch "*.{jpg,jpeg,png,webp,gif,svg}" }}
+          {{ if $img }}
+            {{ $src = $img.RelPermalink }}
+          {{ else if .Params.image }}
+            {{ $src = .Params.image }}
+          {{ end }}
+          <a
+            class="photo-grid__item{{ if eq $src $placeholder }} photo-grid__item--placeholder{{ end }}"
+            href="{{ .RelPermalink }}"
+            data-year="{{ .Date.Format "2006" }}"
+            data-month="{{ .Date.Format "01" }}"
+            data-month-name="{{ .Date.Format "January" }}"
+            data-group-key="{{ .Date.Format "2006-01" }}">
+            <div class="photo-grid__thumb">
+              <img src="{{ $src | safeURL }}" alt="{{ .Title }}" loading="lazy">
+            </div>
+            <span class="photo-grid__title">{{ .Title }}</span>
+          </a>
+        {{ end }}
       </div>
-      <span class="photo-grid__title">{{ .Title }}</span>
-    </a>
+    </section>
+    {{ end }}
+  </section>
   {{ end }}
 </div>
+{{ $pagerUrls := slice }}
+{{ range $paginator.Pagers }}
+  {{ $pagerUrls = $pagerUrls | append .URL }}
+{{ end }}
+{{ if and (eq $paginator.PageNumber 1) (gt (len $allPages) 12) }}
+<div class="photo-grid__actions">
+  <a class="photo-grid__more" href="{{ index $pagerUrls 1 }}">Load more</a>
+  <span class="photo-grid__more-meta"></span>
+</div>
+{{ end }}
+<script>
+  (() => {
+    const button = document.querySelector('.photo-grid__more');
+    const meta = document.querySelector('.photo-grid__more-meta');
+    const actions = document.querySelector('.photo-grid__actions');
+    const archive = document.querySelector('.photo-archive');
+    if (!archive) return;
+
+    const pagerUrls = {{ $pagerUrls | jsonify | safeJS }};
+    const total = {{ len $allPages }};
+    const pageSize = 9;
+    const initialCount = 12;
+    const step = 9;
+    let cursor = initialCount;
+    const pageCache = new Map();
+
+    const updateMeta = () => {
+      if (!actions) return;
+      const remaining = Math.max(total - cursor, 0);
+      const nextLoad = Math.min(step, remaining);
+      if (meta) {
+        meta.textContent = remaining > 0 ? `${nextLoad} next, ${remaining} left` : '';
+      }
+      if (remaining <= 0) {
+        actions.hidden = true;
+      } else if (meta) {
+        meta.hidden = false;
+      }
+    };
+
+    const fetchPageCards = async (pageNumber) => {
+      if (pageCache.has(pageNumber)) return pageCache.get(pageNumber);
+      const url = pagerUrls[pageNumber - 1];
+      if (!url) return [];
+      const promise = fetch(url, { credentials: 'same-origin' })
+        .then((response) => {
+          if (!response.ok) throw new Error(`Failed to load ${url}`);
+          return response.text();
+        })
+        .then((html) => {
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          return Array.from(doc.querySelectorAll('.photo-grid .photo-grid__item'));
+        });
+      pageCache.set(pageNumber, promise);
+      return promise;
+    };
+
+    const ensureYearGroup = (year) => {
+      let yearGroup = archive.querySelector(`.photo-year-group[data-year="${year}"]`);
+      if (yearGroup) return yearGroup;
+
+      yearGroup = document.createElement('section');
+      yearGroup.className = 'photo-year-group';
+      yearGroup.dataset.year = year;
+
+      const heading = document.createElement('h2');
+      heading.textContent = year;
+      yearGroup.appendChild(heading);
+      archive.appendChild(yearGroup);
+      return yearGroup;
+    };
+
+    const ensureMonthGroup = (item) => {
+      const year = item.dataset.year;
+      const month = item.dataset.month;
+      const monthName = item.dataset.monthName;
+      const groupKey = item.dataset.groupKey;
+      let monthGroup = archive.querySelector(`.photo-month-group[data-group-key="${groupKey}"]`);
+      if (monthGroup) return monthGroup.querySelector('.photo-grid');
+
+      const yearGroup = ensureYearGroup(year);
+      monthGroup = document.createElement('section');
+      monthGroup.className = 'photo-month-group';
+      monthGroup.dataset.groupKey = groupKey;
+      monthGroup.dataset.year = year;
+      monthGroup.dataset.month = month;
+      monthGroup.dataset.monthName = monthName;
+
+      const heading = document.createElement('h3');
+      heading.textContent = monthName;
+      monthGroup.appendChild(heading);
+
+      const grid = document.createElement('div');
+      grid.className = 'photo-grid';
+      monthGroup.appendChild(grid);
+
+      yearGroup.appendChild(monthGroup);
+      return grid;
+    };
+
+    const appendRange = async (start, end) => {
+      const safeStart = Math.max(initialCount, start);
+      const safeEnd = Math.min(end, total);
+      if (safeEnd <= safeStart) return;
+
+      const startPage = Math.floor(safeStart / pageSize) + 1;
+      const endPage = Math.floor((safeEnd - 1) / pageSize) + 1;
+      if (button) {
+        button.setAttribute('aria-disabled', 'true');
+      }
+
+      try {
+        for (let pageNumber = startPage; pageNumber <= endPage; pageNumber += 1) {
+          const cards = await fetchPageCards(pageNumber);
+          const startIndex = pageNumber === startPage ? safeStart % pageSize : 0;
+          const endIndex = pageNumber === endPage ? ((safeEnd - 1) % pageSize) + 1 : cards.length;
+          cards.slice(startIndex, endIndex).forEach((card) => {
+            const targetGrid = ensureMonthGroup(card);
+            targetGrid.appendChild(card);
+          });
+        }
+        cursor = safeEnd;
+        updateMeta();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (button) {
+          button.removeAttribute('aria-disabled');
+        }
+      }
+    };
+
+    const appendNextBatch = async () => {
+      await appendRange(cursor, cursor + step);
+    };
+
+    if (button) {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        appendNextBatch();
+      });
+    }
+
+    updateMeta();
+  })();
+</script>
 {{ end }}

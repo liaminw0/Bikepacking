@@ -1,5 +1,8 @@
 {{ define "main" }}
-<h1>{{ .Title }}</h1>
+<div class="journal-heading-group">
+  <h3 class="journal-context"><a class="journal-back-link" href="{{ "/photos/" | relURL }}" data-photos-back-link>Photos</a><span class="journal-title-separator"> / </span></h3>
+  <h1>{{ .Title }}</h1>
+</div>
 
 <p class="post-meta">
   <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
@@ -8,7 +11,7 @@
 </p>
 
 {{ $placeholder := "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' fill='%23f2f2f2'%3E%3Crect width='600' height='600'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='32' font-family='Arial,sans-serif'%3EPhoto%3C/text%3E%3C/svg%3E" }}
-{{ $img := .Resources.GetMatch "*.{jpg,jpeg,png,webp,gif}" }}
+{{ $img := .Resources.GetMatch "*.{jpg,jpeg,png,webp,gif,svg}" }}
 {{ $src := $placeholder }}
 {{ if $img }}
   {{ $src = $img.RelPermalink }}
@@ -18,7 +21,7 @@
 
 {{ if $src }}
 <figure class="photo-full">
-  <img src="{{ $src }}" alt="{{ default .Title .Params.caption }}">
+  <img src="{{ $src | safeURL }}" alt="{{ default .Title .Params.caption }}">
 </figure>
 {{ else }}
 <p><em>No image provided for this photo entry.</em></p>
@@ -42,4 +45,25 @@
     {{ end }}
   </div>
 </nav>
+<script>
+  (() => {
+    const backLink = document.querySelector('[data-photos-back-link]');
+    if (!backLink) return;
+
+    try {
+      const photosPath = {{ "/photos/" | relURL | jsonify | safeJS }};
+      if (!document.referrer) return;
+      const referrer = new URL(document.referrer, window.location.origin);
+      const cameFromPhotosList = referrer.origin === window.location.origin
+        && (referrer.pathname === photosPath || /^\/photos\/page\/\d+\/?$/.test(referrer.pathname));
+
+      if (!cameFromPhotosList) return;
+
+      backLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        window.history.back();
+      });
+    } catch (error) {}
+  })();
+</script>
 {{ end }}
