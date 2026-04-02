@@ -1,6 +1,5 @@
 import { basicAuthHeader, getNextcloudConfig, jsonResponse, verifyRequest } from "./auth.js";
 
-const MAX_ITEMS = 200;
 const DEFAULT_LIMIT = 10;
 
 const basicAuthHeaders = (cfg) => ({
@@ -61,7 +60,7 @@ export async function handler(event) {
   const rawOffset = Number.parseInt(event.queryStringParameters?.offset || "0", 10);
   const rawLimit = Number.parseInt(event.queryStringParameters?.limit || `${DEFAULT_LIMIT}`, 10);
   const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
-  const limit = Number.isFinite(rawLimit) ? Math.min(MAX_ITEMS, Math.max(1, rawLimit)) : DEFAULT_LIMIT;
+  const limit = Number.isFinite(rawLimit) ? Math.max(1, rawLimit) : DEFAULT_LIMIT;
   let cfg;
   try {
     cfg = getNextcloudConfig();
@@ -84,7 +83,7 @@ export async function handler(event) {
       const status = res.status === 401 ? 502 : 500;
       return jsonResponse(status, { error: "Failed to load images" });
     }
-    const items = parsePropfind(body, cfg).slice(0, MAX_ITEMS);
+    const items = parsePropfind(body, cfg);
     const pagedItems = items.slice(offset, offset + limit);
     return jsonResponse(200, {
       items: pagedItems,
