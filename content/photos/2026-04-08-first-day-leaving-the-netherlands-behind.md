@@ -1,5 +1,5 @@
 ---
-title: "first day leaving the Netherlands behind"
+title: "First day leaving the Netherlands behind"
 date: 2026-04-08T16:10:00.000Z
 draft: false
 image: "https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01177.webp"
