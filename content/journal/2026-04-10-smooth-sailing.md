@@ -1,6 +1,6 @@
 ---
 title: "Smooth sailing"
-date: 2026-04-10T20:08:00.000Z
+date: 2026-04-10T18:08:00.000Z
 draft: false
 tags: []
 slug: smooth-sailing
@@ -39,13 +39,11 @@ I read 2 books this week
 
 One I got from Benne and Tessa called The Amazing Tale of a Deaf Adventurer.
 
-It is an autobig about a guy named Albert who traveled the world by bike while being deaf in the 1890s only a few years after the bike as we know it had been invented.
+It is about a guy named Albert who traveled the world by bike while being deaf in the 1890s only a few years after the bike as we know it had been invented.
 
-Very interesting book and I thoroughly enjoyed reading it. I can't wrap my head around going to Russia and Jerusalem on bike in a time where roads simply weren't made for that sort of activity.
+Very interesting book and I thoroughly enjoyed reading it. I can't wrap my head around going to Russia and Jerusalem by bike in a time where roads simply weren't made for that sort of activity.
 
 Also he spent a big chunk of his life in Assen which is cool
-
-The second book
 
 The second book is a fictional tale called Ingrem by Louis C.K.
 
