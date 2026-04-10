@@ -1,6 +1,6 @@
 ---
 title: "Smooth sailing"
-date: 2026-04-10T18:08:00.000Z
+date: 2026-04-10T16:08:00.000Z
 draft: false
 tags: []
 slug: smooth-sailing
@@ -9,7 +9,7 @@ Smooth sailing it has been this first week. Very little trouble and much enjoyme
 
 ![DSC01166](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01166.webp)
 
-The only trouble I have had was a hole in my glove that i got on the first day which I sewed closed and then lost my gloves completely on Monday...
+The only trouble I've had was a hole in my glove that appeared on the first day which I then sewed closed and then lost my gloves completely on Monday...
 
 It took longer than I had anticipated to travel out of the Netherlands. This because when I cycled to Prague almost 2 years ago I took the quickest road possible to milingen aan de rijn. This time I choose a more scenic route.
 
