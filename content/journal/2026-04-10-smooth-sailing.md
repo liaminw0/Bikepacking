@@ -49,4 +49,4 @@ The second book is a fictional tale called Ingrem by Louis C.K.
 
 It follows a boy named Ingrem while he is coming of age. He is from the deep south and is abandoned by his parents at the age of 10.
 
-The story follows him every step until he is grown. The most morbid stuff happens to him and it is quite a depressing book but you can’t help continue reading. You want to know what happens next to this boy
+The story follows him every step until he is grown. The most morbid stuff happens to him and it is quite a depressing book but you can’t help continue reading. You want to know what happens next to this boy.
