@@ -1,7 +1,7 @@
 ---
 title: "All in one week"
-date: 2026-04-18T14:46:00.000Z
-draft: true
+date: 2026-04-18T12:46:00.000Z
+draft: false
 tags: []
 slug: all-in-one-week
 ---
@@ -30,7 +30,6 @@ Since the 15th it’s become noticeably less mountainous, with more flatness and
 
 ![DSC01271](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01271.webp)
 
-
 I’ve had a few days where it was hard pedaling onwards. So that’s when I implemented music. I try to only use it when necessary, but when I do it really helps. A lot of Frank Sinatra, Spinvis and André Hazes.
 
 ![DSC01253](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01253.webp)
@@ -41,8 +40,7 @@ I’ve had a few days where it was hard pedaling onwards. So that’s when I imp
 
 ![DSC01319](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01319.webp)
 
-
-Also had a few bike issues that needed solving. A squeaky pedal, and I had an accident while in a busy city, which can be quite stressful in not bike friendly countries. The grip plate of the padel came off when i scratched the padel against a high sidewalk. Meaning it needed to be glued on again. I also had some issue with my pump where a crucial part has been lost. But I’ve managed, with some tinkering, to restore the function that part had been serving.
+Also had a few bike issues that needed solving. A squeaky pedal, and I had an accident while in a busy city, which can be quite a stressful place to be in in a not bike friendly countries. The grip plate of the padel came off when i scratched the padel against a high sidewalk. Meaning it needed to be glued on again. I also had some issue with my pump where a crucial part has been lost. But I’ve managed, with some tinkering, to restore the function that part had been serving.
 
 ![DSC01257](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01257.webp)
 
