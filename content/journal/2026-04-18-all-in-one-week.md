@@ -1,13 +1,13 @@
 ---
 title: "All in one week"
-date: 2026-04-18T16:46:00.000Z
+date: 2026-04-18T14:46:00.000Z
 draft: true
 tags: []
 slug: all-in-one-week
 ---
 ![DSC01244](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01244.webp)
 
-A lot has happened this week. I’ve had people clapping as I cycled by, older ladies inspecting my bike with the most curious interest. The lid of a tomato sauce bottle came off in my food bag, covering all my stuff in tomato sauce. I met a Camino hiker named Philip, or I think that was his name. I got invited for some expensive-looking rum and cheese by this very interesting German couple. I've received coffee and and egg from people. And I met a lady who explained to me some about George Sand, a famous feminist writer from this area who used to live near the place I am currently at in Montgivray (taking a rest day here). I’ve had good weather.
+A lot has happened this week. I’ve had people clapping as I cycled by, older ladies inspecting my bike with the most curious interest. The lid of a tomato sauce bottle came off in my food bag, covering all my stuff in tomato sauce. I met a Camino hiker named Philip, or I think that was his name. I got invited for some expensive-looking rum and cheese by this very interesting German couple. I've received coffee and a egg from people. And I met a lady who explained to me some about George Sand, a famous feminist writer from this area who used to live near the place I am currently at in Montgivray (taking a rest day here). I’ve had good weather.
 It only rained on the 11th. The last two days it has been 24°. A very nice temperature.
 
 ![DSC01240](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01240.webp)
@@ -16,8 +16,7 @@ It only rained on the 11th. The last two days it has been 24°. A very nice temp
 
 ![DSC01259](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01259.webp)
 
-
-Since the 15th it’s become noticeably less mountainous, with more flatness and fewer steep slopes. Along canals it feels so easy to bike after all the climbing I’ve been doing. I had a tough climb in Vézelay because the cathedral is on top of a hill. I stayed at a campsite at the outskirts of the city where I met Philip. He only spoke French and I definitely don’t speak French, but we somehow managed to get along. I asked him if he wanted to go for astroll through Vézelay and so we did. Even with a language barrier we had some laughs and shared some of our expirences He’s an interesting fellow. Hiking is what he does full time. he’s walking the Camino back and frxo and sdtarted in the north of France. He usually sleeps by wild camping and supports himself by posting TikToks of his journey. He makes enough with it to pay for food, etc.
+Since the 15th it’s become noticeably less mountainous, with more flatness and fewer steep slopes. Along canals it feels so easy to bike after all the climbing I’ve been doing. I had a tough climb in Vézelay because the cathedral is on top of a hill. I stayed at a campsite at the bottom of that hill where I met Philip. He only spoke French and I definitely don’t speak French, but we somehow managed to get along. I asked him if he wanted to go for astroll through Vézelay and so we did. Even with a language barrier we had some laughs and shared some of our expirieces. He’s an interesting fellow. Hiking is what he does full time. he’s walking the Camino back and forth and started in the north of France. He usually sleeps by wild camping and supports himself by posting TikToks of his journey. He makes enough with it to pay for food, etc.
 
 ![DSC01257](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01257.webp)
 
