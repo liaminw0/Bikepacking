@@ -1,6 +1,6 @@
 ---
 title: "All in one week"
-date: 2026-04-18T12:46:00.000Z
+date: 2026-04-18T10:46:00.000Z
 draft: false
 tags: []
 slug: all-in-one-week
@@ -42,7 +42,8 @@ I’ve had a few days where it was hard pedaling onwards. So that’s when I imp
 
 Also had a few bike issues that needed solving. A squeaky pedal, and I had an accident while in a busy city, which can be quite a stressful place to be in in a not bike friendly countries. The grip plate of the padel came off when i scratched the padel against a high sidewalk. Meaning it needed to be glued on again. I also had some issue with my pump where a crucial part has been lost. But I’ve managed, with some tinkering, to restore the function that part had been serving.
 
-![DSC01257](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01257.webp)
-
 ![DSC01231](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01231.webp)
 
+Current location
+
+{{< openstreetmap lat="46.600780" lon="1.978180" >}}
