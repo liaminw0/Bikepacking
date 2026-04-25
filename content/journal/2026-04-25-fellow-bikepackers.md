@@ -1,6 +1,6 @@
 ---
 title: "fellow bikepackers"
-date: 2026-04-25T18:05:00.000Z
+date: 2026-04-25T16:05:00.000Z
 draft: false
 tags: []
 slug: fellow-bikepackers
@@ -33,3 +33,7 @@ It's nothing I can't handle, and I'm enjoying it. Mostly because they come with 
 One night we experienced rain and thunder for some time in the evening. It was a great test to see if my new tent would hold up. It kept dry, and the inner and outer tent stayed severely separated, which is a good sign. Only the next morning, when packing up the tent, I discovered some water had leaked on top of the ground tarp. However, it had not penetrated the tent.
 
 ![DSC01334](https://cloud.inwards.io/public.php/dav/files/9pDQditxdfqww9C/DSC01334.webp)
+
+Current location:
+
+{{< openstreetmap lat="44.096772" lon="0.887452" >}}
